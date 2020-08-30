@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "1013338580818",
+    "firebase_url": "https://ssdam-4174b.firebaseio.com",
+    "project_id": "ssdam-4174b",
+    "storage_bucket": "ssdam-4174b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1013338580818:android:52330b589c46ffa6487c8b",
+        "android_client_info": {
+          "package_name": "com.ssdam.ssdam_demo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1013338580818-im441r8ip3jiovamhkk2jt24029dt8uo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ssdam.ssdam_demo",
+            "certificate_hash": "d562ee906d19cdcc14816fbe8e88477dd41e8525"
+          }
+        },
+        {
+          "client_id": "1013338580818-t7grt165pl0qcsv0gippaog9dkp9298f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC22QPzLwtP8y2bmxnw38u8oUON9D_kKw0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1013338580818-t7grt165pl0qcsv0gippaog9dkp9298f.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1013338580818-obk7fd4krm8n6qfuuun7nd89ctiu7l4c.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.ssdam"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
