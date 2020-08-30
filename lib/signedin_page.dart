@@ -186,7 +186,6 @@ class SignedInPageState extends State<SignedInPage> {
               margin: const EdgeInsets.only(left: 30.0, right: 30.0),
               child: Center(
                 child: Column(children: <Widget>[
-                  Padding(padding: EdgeInsets.only(top: grid_height / 4)),
                   FutureBuilder(
                       future: Loading(),
                       builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -214,8 +213,8 @@ class SignedInPageState extends State<SignedInPage> {
                     onPressed: reservationBtn,
                     color: COLOR_SSDAM,
                     textColor: Colors.white,
-                    minWidth: grid_height * 4,
-                    height: grid_height * 4,
+                    minWidth: grid_height * 3.7,
+                    height: grid_height * 3.7,
                     child: Image.asset(
                       'assets/trash-icon.png',
                       width: 150.0,
@@ -331,7 +330,43 @@ class SignedInPageState extends State<SignedInPage> {
               //       });
               //     });
               log.d("예약 요청 시각 : ${reservationInfo.getReservationTime()}");
-            })
+            }),
+        ReservationButton(
+            text: reservationInfo.getCustomerRequests().length != 0
+                ? '${reservationInfo.getCustomerRequests()}'
+                : '현관 비밀번호가 있으신가요?',
+            onPressed: () async{
+              await PopupBox.showPopupBox(
+                  context: context,
+                  button: MaterialButton(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    color: Colors.blue,
+                    child: Text(
+                      'Ok',
+                      style: TextStyle(fontSize: 20),
+                    ),
+                    onPressed: () {
+                      reservationInfo
+                          .setCustomerRequests(customerRequestCont.text.trim());
+                      Navigator.of(context).pop();
+                      setRememberAddr(
+                          reservationInfo.getCustomerRequests(), detailAddressCont.text);
+                    },
+                  ),
+                  willDisplayWidget: Column(
+                    children: <Widget>[
+                      Text(
+                        '요청 사항을 입력해주세요.\n(현관 비밀번호 등)',
+                        style: TextStyle(fontSize: 16, color: Colors.black),
+                      ),
+                      TextField(
+                        controller: customerRequestCont,
+                      )
+                    ],
+                  ));
+            }),
       ],
     ));
   }
@@ -434,17 +469,18 @@ class SignedInPageState extends State<SignedInPage> {
             }
           },
         ),
-        willDisplayWidget: Column(
-          children: <Widget>[
-            Text(
-              '요청 사항을 입력해주세요.\n(현관 비밀번호 등)',
-              style: TextStyle(fontSize: 16, color: Colors.black),
-            ),
-            TextField(
-              controller: customerRequestCont,
-            )
-          ],
-        ));
+        // willDisplayWidget: Column(
+        //   children: <Widget>[
+        //     Text(
+        //       '요청 사항을 입력해주세요.\n(현관 비밀번호 등)',
+        //       style: TextStyle(fontSize: 16, color: Colors.black),
+        //     ),
+        //     TextField(
+        //       controller: customerRequestCont,
+        //     )
+        //   ],
+        // )
+    );
   }
 
   final List<Widget> eventSliders = eventList
