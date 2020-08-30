@@ -229,7 +229,7 @@ class MyPageState extends State<MyPage> {
     print("1: ${value1}, 2: ${value2}, 3 : ${value3}, 4 : ${value4}, 5 : ${value5}, 6 : ${value6}");
         return Card(
           child:ListTile(
-            title: Text('최근 6개월 이용'),
+            title: Text('최근 6개월 이용 내역'),
             subtitle: Center(
               child: Container(
                 color: Colors.white,
@@ -244,11 +244,9 @@ class MyPageState extends State<MyPage> {
                     BezierLine(
                       label: "회 예약",
                       lineColor: COLOR_SSDAM,
+                      lineStrokeWidth: 2.0,
                       onMissingValue: (dateTime) {
-                        if (dateTime.month.isEven) {
-                          return 10.0;
-                        }
-                        return 5.0;
+                        return 0.0;
                       },
                       data: [
                         DataPoint<DateTime>(value: value1, xAxis: date1),
@@ -263,14 +261,14 @@ class MyPageState extends State<MyPage> {
 
                   config: BezierChartConfig(
                     displayLinesXAxis: true,
-                    verticalIndicatorStrokeWidth: 3.0,
+                    verticalIndicatorStrokeWidth: 10.0,
                     verticalIndicatorColor: Colors.black26,
                     showVerticalIndicator: true,
                     verticalIndicatorFixedPosition: false,
                     backgroundColor: Colors.white60,
                     footerHeight: grid_height,
                     xAxisTextStyle: TextStyle(color: Colors.black),
-                    yAxisTextStyle: TextStyle(color: Colors.black)
+                    yAxisTextStyle: TextStyle(color: Colors.black),
                   ),
                 ),
               ),
