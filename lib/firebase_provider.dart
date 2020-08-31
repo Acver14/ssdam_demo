@@ -107,6 +107,7 @@ class FirebaseProvider with ChangeNotifier {
       assert(user.uid == currentUser.uid);
       setUser(user);
 
+
       //await setUserInfo();
       return true;
     } on Exception catch (e) {

@@ -5,6 +5,9 @@ import 'package:ssdam_demo/auth/auth_page.dart';
 import 'package:ssdam_demo/customClass/reservatioin_info_class.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+
+
+
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {

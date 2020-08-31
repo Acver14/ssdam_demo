@@ -21,10 +21,12 @@ import 'package:carousel_slider/carousel_slider.dart';
 
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 SignedInPageState pageState;
 
 final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
+var _flutterLocalNotificationsPlugin;
 
 final List<String> eventList = ['assets/event/event_demo.png'];
 
@@ -217,8 +219,8 @@ class SignedInPageState extends State<SignedInPage> {
                     height: grid_height * 3.7,
                     child: Image.asset(
                       'assets/trash-icon.png',
-                      width: 150.0,
-                      height: 150.0,
+                      width: grid_height * 2.7,
+                      height:grid_height * 2.7,
                     ),
                     padding: EdgeInsets.all(16),
                     shape: CircleBorder(),
@@ -352,7 +354,7 @@ class SignedInPageState extends State<SignedInPage> {
                           .setCustomerRequests(customerRequestCont.text.trim());
                       Navigator.of(context).pop();
                       setRememberAddr(
-                          reservationInfo.getCustomerRequests(), detailAddressCont.text);
+                          reservationInfo.getCustomerRequests(), customerRequestCont.text);
                     },
                   ),
                   willDisplayWidget: Column(

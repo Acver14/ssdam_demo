@@ -56,12 +56,15 @@ dependencies:
   cloud_functions: ^0.4.1+4
   google_sign_in: ^4.4.1
   http: ^0.12.0+2
+
+  #notification
   #firebase_messaging: 5.1.5
   firebase_messaging:
     git:
       url: git://github.com/FirebaseExtended/flutterfire.git
       ref: c0f8aa0e3178b2b7a44f2da2ebb2e768c51d3c21
       path: packages/firebase_messaging
+  flutter_local_notifications: ^1.4.1
 
   #button
   flutter_auth_buttons: ^0.8.0
