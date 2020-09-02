@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:ssdam_demo/customClass/reservatioin_info_class.dart';
+import 'package:ssdam_demo/customClass/size_constant.dart';
 import 'package:ssdam_demo/firebase_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
@@ -44,12 +45,12 @@ class SignedInPageState extends State<SignedInPage> {
   bool _getTrash = false;
   int _tickets;
   bool _loaded = false;
+  var _icon_button = "close_trash.png";
   TextEditingController detailAddressCont = TextEditingController();
   TextEditingController customerRequestCont = TextEditingController();
   ReservationInfoProvider reservationInfo = new ReservationInfoProvider();
-  var grid_height;
+  var grid_height, grid_width;
   var log = Logger();
-
 
   void firebaseCloudMessaging_Listeners() {
     if (Platform.isIOS) iOS_Permission();
@@ -112,8 +113,6 @@ class SignedInPageState extends State<SignedInPage> {
       reservationInfo.setAddress(prefs.getString("recentlyAddress") ?? "");
       reservationInfo
           .setDetailedAddress(prefs.getString("recentlyDetailedAddress") ?? "");
-      reservationInfo.setCustomerRequests(
-          prefs.getString("recentlyCustomerRequests") ?? "");
     });
   }
 
@@ -155,7 +154,8 @@ class SignedInPageState extends State<SignedInPage> {
     Constant.setTimeRange(9, 18);
     Constant.setMinuteRange(0, 59);
     final double statusBarHeight = MediaQuery.of(context).padding.top;
-    grid_height = MediaQuery.of(context).size.height / 10;
+    grid_height = getDisplayHeight(context) / 10;
+    grid_width = getDisplayWidth(context) / 10;
     return Scaffold(
       resizeToAvoidBottomInset: false,
       extendBodyBehindAppBar: true,
@@ -166,7 +166,7 @@ class SignedInPageState extends State<SignedInPage> {
         toolbarOpacity: 1.0,
       ),
       drawer: sideDrawer(context, fp),
-      body: Column(
+      body: Wrap(
         children: <Widget>[
           SizedBox(
             height: statusBarHeight,
@@ -218,12 +218,15 @@ class SignedInPageState extends State<SignedInPage> {
                     minWidth: grid_height * 3.7,
                     height: grid_height * 3.7,
                     child: Image.asset(
-                      'assets/trash-icon.png',
+                      'assets/icon/${_icon_button}',
                       width: grid_height * 2.7,
-                      height:grid_height * 2.7,
+                      height: grid_height * 2.7,
+                      fit: BoxFit.fill,
                     ),
                     padding: EdgeInsets.all(16),
-                    shape: CircleBorder(),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
                   )
                 ]),
               ))
@@ -248,40 +251,68 @@ class SignedInPageState extends State<SignedInPage> {
             );
             //print(model.toJson());
             if (model != null) {
-              setState(() {
-                reservationInfo.setAddress('${model.address}');
-              });
-              log.d("show?");
-              await PopupBox.showPopupBox(
-                  context: context,
-                  button: MaterialButton(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    color: Colors.blue,
-                    child: Text(
-                      'Ok',
-                      style: TextStyle(fontSize: 20),
-                    ),
-                    onPressed: () {
-                      reservationInfo
-                          .setDetailedAddress(detailAddressCont.text.trim());
-                      Navigator.of(context).pop();
-                      setRememberAddr(
-                          reservationInfo.getAddress(), detailAddressCont.text);
-                    },
-                  ),
-                  willDisplayWidget: Column(
-                    children: <Widget>[
-                      Text(
-                        '상세주소를 입력해주세요.\n(상세주소가 없을 경우 생략)',
-                        style: TextStyle(fontSize: 16, color: Colors.black),
+              if (model.address.toString().indexOf('광진구') == -1) {
+                await PopupBox.showPopupBox(
+                    context: context,
+                    button: MaterialButton(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      TextField(
-                        controller: detailAddressCont,
-                      )
-                    ],
-                  ));
+                      color: Colors.blue,
+                      child: Text(
+                        'Ok',
+                        style: TextStyle(fontSize: 20),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    willDisplayWidget: Column(
+                      children: <Widget>[
+                        Text(
+                          '죄송합니다.\n현재 서비스는 광진구에서만 진행하고 있습니다.',
+                          style: TextStyle(fontSize: 16, color: Colors.black),
+                        ),
+                        TextField(
+                          controller: detailAddressCont,
+                        )
+                      ],
+                    ));
+              }
+              else {
+                setState(() {
+                  reservationInfo.setAddress('${model.address}');
+                });
+                log.d("show?");
+                await PopupBox.showPopupBox(
+                    context: context,
+                    button: MaterialButton(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      color: Colors.blue,
+                      child: Text(
+                        'Ok',
+                        style: TextStyle(fontSize: 20),
+                      ),
+                      onPressed: () {
+                        reservationInfo
+                            .setDetailedAddress(detailAddressCont.text.trim());
+                        Navigator.of(context).pop();
+                        setRememberAddr(
+                            reservationInfo.getAddress(),
+                            detailAddressCont.text);
+                      },
+                    ),
+                    willDisplayWidget: Column(
+                      children: <Widget>[
+                        Text(
+                          '상세주소를 입력해주세요.\n(상세주소가 없을 경우 생략)',
+                          style: TextStyle(fontSize: 16, color: Colors.black),
+                        ),
+                      ],
+                    ));
+              }
             }
           },
         ), // input address
@@ -300,7 +331,7 @@ class SignedInPageState extends State<SignedInPage> {
                       lastDate: DateTime.now().add(Duration(days: 30)))
                   .then((date) {
                 setState(() {
-                  reservationInfo.setReservationTime(date);
+                  if (date != null) reservationInfo.setReservationTime(date);
                   log.d(reservationInfo.getReservationTime());
                   print(reservationInfo.getReservationTime());
 
@@ -311,14 +342,45 @@ class SignedInPageState extends State<SignedInPage> {
                       hour: t.hour,
                       minute: t.minute,
                     ),
-                  ).then((time) {
+                  ).then((time) async {
                     setState(() {
-                      DateTime tmp = reservationInfo.getReservationTime();
-                      reservationInfo.setReservationTime(DateTime(tmp.year,
-                          tmp.month, tmp.day, time.hour, time.minute));
-                      print(
-                          'reservationTime: ${reservationInfo.getReservationTime()}');
-                    });
+                      if (time != null) {
+                        if ((time.hour > 9 && time.hour < 13) ||
+                            (time.hour > 18 && time.hour < 20)) {
+                          DateTime tmp = reservationInfo.getReservationTime();
+                          reservationInfo.setReservationTime(DateTime(tmp.year,
+                              tmp.month, tmp.day, time.hour, time.minute));
+                        }
+                        print(time.hour.toString());
+                      }
+                      print('reservationTime: ${reservationInfo
+                          .getReservationTime()}');
+                    }
+                    );
+                    await PopupBox.showPopupBox(
+                        context: context,
+                        button: MaterialButton(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          color: Colors.blue,
+                          child: Text(
+                            'Ok',
+                            style: TextStyle(fontSize: 20),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                        willDisplayWidget: Column(
+                          children: <Widget>[
+                            Text(
+                              '예약 가능 시간이 아닙니다.\n 예약 가능 시간은 오전 9시부터 13시까지, 18시부터 20시 사이입니다.',
+                              style: TextStyle(
+                                  fontSize: 16, color: Colors.black),
+                            ),
+                          ],
+                        ));
                   });
                 });
               });
@@ -333,28 +395,30 @@ class SignedInPageState extends State<SignedInPage> {
               //     });
               log.d("예약 요청 시각 : ${reservationInfo.getReservationTime()}");
             }),
+
         ReservationButton(
             text: reservationInfo.getCustomerRequests().length != 0
                 ? '${reservationInfo.getCustomerRequests()}'
                 : '현관 비밀번호가 있으신가요?',
-            onPressed: () async{
+            onPressed: () async {
               await PopupBox.showPopupBox(
                   context: context,
                   button: MaterialButton(
+                    minWidth: grid_width * 5,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    color: Colors.blue,
+                    color: COLOR_SSDAM,
                     child: Text(
                       'Ok',
-                      style: TextStyle(fontSize: 20),
+                      style: TextStyle(color: Colors.white, fontSize: 20),
                     ),
                     onPressed: () {
                       reservationInfo
                           .setCustomerRequests(customerRequestCont.text.trim());
                       Navigator.of(context).pop();
-                      setRememberAddr(
-                          reservationInfo.getCustomerRequests(), customerRequestCont.text);
+                      setRememberRequests(
+                          reservationInfo.getCustomerRequests());
                     },
                   ),
                   willDisplayWidget: Column(
@@ -374,115 +438,119 @@ class SignedInPageState extends State<SignedInPage> {
   }
 
   Future<Widget> reservationBtn() async {
-    await PopupBox.showPopupBox(
-        context: context,
-        button: MaterialButton(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          color: Colors.blue,
-          child: Text(
-            'Ok',
-            style: TextStyle(fontSize: 20),
-          ),
-          onPressed: () async {
-            reservationInfo
-                .setCustomerRequests(customerRequestCont.text.trim());
-            Navigator.of(context).pop();
-            setRememberRequests(reservationInfo.getCustomerRequests());
-            reservationInfo.setApplicationTime(DateTime.now());
-            if (fp.getUserInfo()["getTrash?"]) {
-              if (_tickets > 0) {
-                if (reservationInfo.getAddress().length > 0) {
-                  await reservationInfo.saveReservationInfo("collect");
-                  setState(() {
-                    _tickets -= 1;
-                  });
-                  Firestore.instance
-                      .collection('userInfo')
-                      .document(fp.getUser().email)
-                      .updateData({"tickets": _tickets});
-                  return PopupBox.showPopupBox(
-                      context: context,
-                      button: MaterialButton(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        color: Colors.blue,
-                      ),
-                      willDisplayWidget: Center(
-                          child: Text(
-                        '${fp.getUser().displayName}님\n${reservationInfo.getReservationTime()}\n 쓰레기통 수거 예약이 완료되었습니다.',
-                        style: TextStyle(fontSize: 16, color: Colors.black),
-                      )));
-                } else {
-                  return PopupBox.showPopupBox(
-                      context: context,
-                      button: MaterialButton(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        color: Colors.blue,
-                      ),
-                      willDisplayWidget: Center(
-                          child: Text(
-                        '주소 입력해주세요',
-                        style: TextStyle(fontSize: 16, color: Colors.black),
-                      )));
-                }
-              } else {
-                return PopupBox.showPopupBox(
-                    context: context,
-                    button: MaterialButton(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      color: Colors.blue,
-                    ),
-                    willDisplayWidget: Center(
-                        child: Text(
-                      '이용권 없어요 사세요',
-                      style: TextStyle(fontSize: 16, color: Colors.black),
-                    )));
-              }
-            } else {
-              await reservationInfo.saveReservationInfo("deliver");
-              setState(() {
-                _getTrash = true;
-              });
-              Firestore.instance
-                  .collection('userInfo')
-                  .document(fp.getUser().email)
-                  .updateData({"getTrash?": _getTrash});
-              log.d('save to firestore');
-              return PopupBox.showPopupBox(
-                  context: context,
-                  button: MaterialButton(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    color: Colors.blue,
-                  ),
-                  willDisplayWidget: Center(
-                      child: Text(
-                    '${fp.getUser().displayName}님\n${reservationInfo.getReservationTime()}\n 쓰레기통 배송 예약이 완료되었습니다.',
+    reservationInfo.setCustomerRequests(customerRequestCont.text.trim());
+    setRememberRequests(reservationInfo.getCustomerRequests());
+    reservationInfo.setApplicationTime(DateTime.now());
+    if (fp.getUserInfo()["getTrash?"]) {
+      if (_tickets > 0) {
+        if (reservationInfo
+            .getAddress()
+            .length > 0) {
+          await reservationInfo.saveReservationInfo("collect");
+          setState(() {
+            _tickets -= 1;
+          });
+          Firestore.instance
+              .collection('userInfo')
+              .document(fp
+              .getUser()
+              .email)
+              .updateData({"tickets": _tickets});
+          return PopupBox.showPopupBox(
+              context: context,
+              button: MaterialButton(
+                minWidth: grid_width * 5,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                color: COLOR_SSDAM,
+                child: Text(
+                  'Ok',
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                ),
+              ),
+              willDisplayWidget: Center(
+                  child: Text(
+                    '${fp.getUserInfo()['name']}님\n${reservationInfo
+                        .getReservationTime()}\n 쓰레기통 수거 예약이 완료되었습니다.',
                     style: TextStyle(fontSize: 16, color: Colors.black),
                   )));
-            }
-          },
-        ),
-        // willDisplayWidget: Column(
-        //   children: <Widget>[
-        //     Text(
-        //       '요청 사항을 입력해주세요.\n(현관 비밀번호 등)',
-        //       style: TextStyle(fontSize: 16, color: Colors.black),
-        //     ),
-        //     TextField(
-        //       controller: customerRequestCont,
-        //     )
-        //   ],
-        // )
-    );
+        }
+        else {
+          return PopupBox.showPopupBox(
+              context: context,
+              button: MaterialButton(
+                minWidth: grid_width * 5,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                color: COLOR_SSDAM,
+                child: Text(
+                  'Ok',
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                ),
+              ),
+              willDisplayWidget: Center(
+                  child: Text(
+                    '주소를 입력해주시기 바랍니다.',
+                    style: TextStyle(fontSize: 16, color: Colors.black),
+                  )));
+        }
+      } else {
+        return PopupBox.showPopupBox(
+            context: context,
+            button: MaterialButton(
+              minWidth: grid_width * 5,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              color: COLOR_SSDAM,
+              child: Text(
+                'Ok',
+                style: TextStyle(color: Colors.white, fontSize: 20),
+              ),
+            ),
+            willDisplayWidget: Center(
+                child: Text(
+                  '잔여 이용권이 없습니다.',
+                  style: TextStyle(fontSize: 16, color: Colors.black),
+                )));
+      }
+    } else {
+      await reservationInfo.saveReservationInfo("deliver");
+      setState(() {
+        _getTrash = true;
+        _icon_button = "open_trash.png";
+      });
+      Firestore.instance
+          .collection('userInfo')
+          .document(fp
+          .getUser()
+          .email)
+          .updateData({"getTrash?": _getTrash});
+      log.d('save to firestore');
+      return PopupBox.showPopupBox(
+          context: context,
+          button: MaterialButton(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            color: Colors.blue,
+            onPressed: () {
+              setState(() {
+                _icon_button = "close_trash.png";
+              });
+            },
+          ),
+          willDisplayWidget: new Center(
+              child: Text(
+                '${fp
+                    .getUser()
+                    .displayName}님\n${reservationInfo
+                    .getReservationTime()}\n 쓰레기통 배송 예약이 완료되었습니다.',
+                style: TextStyle(fontSize: 16, color: Colors.black),
+              )));
+    }
   }
 
   final List<Widget> eventSliders = eventList

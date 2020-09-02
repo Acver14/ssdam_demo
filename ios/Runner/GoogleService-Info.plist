@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>1013338580818-gg0aqj30hcchk1lnodevl36q0rcpjo5l.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.1013338580818-gg0aqj30hcchk1lnodevl36q0rcpjo5l</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>1013338580818-im441r8ip3jiovamhkk2jt24029dt8uo.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyAce1jyhAHUibK1MDNjg-IWFbma9hZbZ4s</string>
+	<key>GCM_SENDER_ID</key>
+	<string>1013338580818</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.ssdam.ssdamDemo</string>
+	<key>PROJECT_ID</key>
+	<string>ssdam-4174b</string>
+	<key>STORAGE_BUCKET</key>
+	<string>ssdam-4174b.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:1013338580818:ios:a01863c4088fb9ce487c8b</string>
+	<key>DATABASE_URL</key>
+	<string>https://ssdam-4174b.firebaseio.com</string>
+</dict>
+</plist>

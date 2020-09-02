@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 Logger logger = Logger();
 
@@ -16,10 +17,14 @@ class FirebaseProvider with ChangeNotifier {
   FirebaseUser _user; // Firebase에 로그인 된 사용자
   var _user_info = Map<String, dynamic>();
   String _lastFirebaseResponse = ""; // Firebase로부터 받은 최신 메시지(에러 처리용)
+  FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
 
   FirebaseProvider() {
     logger.d("init FirebaseProvider");
     _prepareUser();
+    _firebaseMessaging.getToken().then((token) {
+      print('device token : ${token}');
+    });
   }
 
   FirebaseUser getUser() {
@@ -107,7 +112,14 @@ class FirebaseProvider with ChangeNotifier {
       assert(user.uid == currentUser.uid);
       setUser(user);
 
-
+      var _token;
+      await _firebaseMessaging.getToken().then((token) {
+        _token = token;
+      });
+      await Firestore.instance
+          .collection('fcmTokenInfo')
+          .document(_user_info['email'])
+          .setData({'token': _token}, merge: true);
       //await setUserInfo();
       return true;
     } on Exception catch (e) {

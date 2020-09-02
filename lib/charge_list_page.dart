@@ -19,8 +19,41 @@ class ChargeListPage extends StatefulWidget {
 class ChargeListPageState extends State<ChargeListPage> {
   FirebaseProvider fp;
   final _date_format = new DateFormat('yyyy-MM-dd hh:mm');
+  List<Card> chargeList;
+  final ScrollController _infiniteController =
+      ScrollController(initialScrollOffset: 0.0);
+  QuerySnapshot charge_infos;
 
+  _scrollListener() {
+    if (_infiniteController.offset >=
+            _infiniteController.position.maxScrollExtent &&
+        !_infiniteController.position.outOfRange) {
+      setState(() {
+        print(_infiniteController.position.maxScrollExtent);
+      });
+    }
+    if (_infiniteController.offset <=
+            _infiniteController.position.minScrollExtent &&
+        !_infiniteController.position.outOfRange) {
+      setState(() {});
+    }
+  }
 
+  @override
+  void initState() {
+    // TODO: implement initState
+    _infiniteController.addListener(_scrollListener);
+    //_infiniteController.jumpTo(_infiniteController.position.maxScrollExtent - 1);
+    super.initState();
+  }
+
+  Future<QuerySnapshot> Loading() async {
+    return charge_infos = await Firestore.instance
+        .collection('chargeLog')
+        .document(fp.getUser().email)
+        .collection('chargeInfo')
+        .getDocuments();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,20 +74,28 @@ class ChargeListPageState extends State<ChargeListPage> {
           padding: EdgeInsets.all(16.0),
           childAspectRatio: 5.0 / 10.0,
           children: <Widget>[
-            StreamBuilder<QuerySnapshot>(
-                stream: Firestore.instance
-                    .collection('chargeLog')
-                    .document(fp.getUser().email)
-                    .collection('chargeInfo')
-                    .snapshots(),
+            FutureBuilder(
+                future: Loading(),
                 builder: (BuildContext context,
                     AsyncSnapshot<QuerySnapshot> snapshot) {
                   if (!snapshot.hasData) {
                     return widgetLoading();
                   } else {
                     if (snapshot.data.documents.length > 0) {
-                      return new ListView(
-                          children: getReservationList(snapshot));
+                      getChargeList(snapshot);
+                      print('length:${snapshot.data.documents.length}');
+                      return Expanded(
+                          child: new ListView.builder(
+                            //reverse: true,
+                            scrollDirection: Axis.vertical,
+                            controller: _infiniteController,
+                            itemCount: snapshot.data.documents.length,
+                            itemBuilder: (context, index) {
+                              return getChargeInfo(index, snapshot.data
+                                  .documents.length);
+                            },
+                          )
+                      );
                     } else {
                       return new Center(child: Text("결제건이 없습니다."));
                     }
@@ -64,18 +105,19 @@ class ChargeListPageState extends State<ChargeListPage> {
     );
   }
 
-  getReservationList(AsyncSnapshot<QuerySnapshot> snapshot) {
-    return snapshot.data.documents.map((doc) {
+  getChargeList(AsyncSnapshot<QuerySnapshot> snapshot) {
+    chargeList = snapshot.data.documents.map((doc) {
       String status;
-      if(doc["status"] == "paid"){
+      if (doc["status"] == "paid") {
         status = "결제";
       }
-      else if(doc["status"] == "cancelled"){
+      else if (doc["status"] == "cancelled") {
         status = "환불";
       }
       return new Card(
           child: ListTile(
-            title: new Text('결제 시간 : ${_date_format.format(DateTime.fromMillisecondsSinceEpoch(doc['charge_time']))}'),
+            title: new Text('결제 시간 : ${_date_format.format(
+                DateTime.fromMillisecondsSinceEpoch(doc['charge_time']))}'),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
@@ -89,4 +131,15 @@ class ChargeListPageState extends State<ChargeListPage> {
           ));
     }).toList();
   }
+
+  getChargeInfo(int index, int length) {
+    print('index:${index}');
+    try {
+      return chargeList[length - index - 1];
+    } catch (Exception, e) {
+      print(e);
+      _infiniteController.jumpTo(0);
+    }
+  }
+
 }
