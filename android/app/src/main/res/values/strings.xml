@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="default_notification_channel_id" translatable="false">default</string>
+    <string name="kakao_app_key">kakao0b5c7c4de46a231d87cd4e9518c6aadf</string>
+    <string name="facebook_app_id">313973653225863</string>
+    <string name="fb_login_protocol_scheme">fb313973653225863</string>
 </resources>

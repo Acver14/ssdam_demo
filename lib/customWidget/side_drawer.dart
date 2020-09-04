@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ssdam_demo/customWidget/reservation_button.dart';
 import 'package:ssdam_demo/firebase_provider.dart';
 import 'package:ssdam_demo/point_charge_page.dart';
 import 'package:ssdam_demo/style/customColor.dart';
@@ -10,6 +11,9 @@ import 'package:ssdam_demo/style/textStyle.dart';
 import 'package:ssdam_demo/page_state_provider.dart';
 import 'package:ssdam_demo/charge_list_page.dart';
 import 'package:ssdam_demo/myPage_page.dart';
+import 'package:ssdam_demo/reservation_list_page.dart';
+import 'package:ssdam_demo/customClass/size_constant.dart';
+
 FirebaseProvider fp;
 
 Future<Map<String, dynamic>> Loading(BuildContext context) async {
@@ -18,44 +22,81 @@ Future<Map<String, dynamic>> Loading(BuildContext context) async {
   return fp.getUserInfo();
 }
 
-Widget sideDrawer(BuildContext context, FirebaseProvider fp){
+Widget sideDrawer(BuildContext context, FirebaseProvider fp) {
   PageStateProvider page_state_provider = PageStateProvider();
   return Drawer(
       child: Column(
-        //padding: EdgeInsets.zero,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    //padding: EdgeInsets.zero,
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: <Widget>[
+      Column(
         children: <Widget>[
-          Column(
-            children: <Widget>[
-              Container(
-                height: 150,
-                child:DrawerHeader(
-                    child: Row(
-                        children: <Widget>[
+          Container(
+            height: 160,
+            child: DrawerHeader(
+                child: Wrap(
+                  children: [
+                    Column(
+                      children: [
+                        Row(children: <Widget>[
                           Container(
-                            child: Image.asset("assets/user_default_image.png"),
+                            child: Image.asset(
+                              "assets/user_default_image.png",
+                            ),
                             width: 60,
                           ),
                           Padding(
                             padding: EdgeInsets.all(5),
                           ),
                           FutureBuilder(
-                              future:Loading(context),
-                              builder: (BuildContext context, AsyncSnapshot snapshot) {
-                                if (snapshot.hasData && !snapshot.data.isEmpty){
+                              future: Loading(context),
+                              builder: (BuildContext context,
+                                  AsyncSnapshot snapshot) {
+                                if (snapshot.hasData &&
+                                    !snapshot.data.isEmpty) {
                                   return userInterface(context);
-                                }
-                                else {
+                                } else {
                                   return widgetLoading();
                                 }
                               })
-                        ]
+                        ]),
+                        // Container(
+                        //   width: double.infinity,
+                        //   decoration: BoxDecoration(
+                        //     boxShadow:  [
+                        //       BoxShadow(
+                        //         color: COLOR_SSDAM.withOpacity(0.5),
+                        //         spreadRadius: 2,
+                        //         blurRadius: 7,
+                        //         offset: Offset(3, 0), // changes position of shadow
+                        //       ),
+                        //     ],
+                        //   ),
+                        //   child: RaisedButton(
+                        //     color: COLOR_SSDAM.withOpacity(0.5),
+                        //       child: Text(
+                        //         '이용권 충전',
+                        //         style:TextStyle(color:Colors.black),
+                        //       ),
+                        //       onPressed: ()=>Navigator.push(context, MaterialPageRoute(builder:(context)=>PointChargePage()))
+                        //   ),
+                        // )
+                        ReservationButton(
+                          text: '이용권 충전',
+                          onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => PointChargePage())),
+                          color: COLOR_CHARGE,
+                        )
+                      ],
                     ),
-                    decoration: BoxDecoration(
-                      color: COLOR_SSDAM,
-                    )
+                  ],
                 ),
-              ),
+                decoration: BoxDecoration(
+                  color: COLOR_SSDAM,
+                )),
+          ),
               ListTile(
                   title: Text(
                       '마이페이지',
@@ -178,30 +219,54 @@ Widget sideDrawer(BuildContext context, FirebaseProvider fp){
   );
 }
 
-Widget userInterface(BuildContext context){
-  return Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: <Widget>[
-      Text(
-        '${fp.getUser().displayName}님 환영합니다!',
-      ),
-      // Text(
-      //     'Lv. ${fp.getUserInfo()['level']}'
-      // ),
-      Text(
-        '이용권 : ${fp.getUserInfo()['tickets']}',
-      ),
-      Text(
-        '포인트 : ${fp.getUserInfo()['points']}',
-      ),
-      InkWell(
-        child: Text(
-            '이용권 충전'
-        ),
-        onTap: ()=>Navigator.push(context, MaterialPageRoute(builder:(context)=>PointChargePage()))
+Widget userInterface(BuildContext context) {
+  return Wrap(
+    children: [
+      Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            '${fp
+                .getUser()
+                .displayName}님 환영합니다!',
+            style: TextStyle(
+                color: Colors.white
+            ),
+          ),
+          // Text(
+          //     'Lv. ${fp.getUserInfo()['level']}'
+          // ),
+          Text(
+            '이용권 : ${fp.getUserInfo()['tickets']}',
+            style: TextStyle(
+                color: Colors.white
+            ),
+          ),
+          Text(
+            '포인트 : ${fp.getUserInfo()['points']}',
+            style: TextStyle(
+                color: Colors.white
+            ),
+          ),
+          // Container(
+          //   decoration: BoxDecoration(
+          //     color: COLOR_SSDAM,
+          //     border: Border.all(
+          //       color: Colors.white
+          //     ),
+          //   ),
+          //   child:  InkWell(
+          //       child: Text(
+          //         '이용권 충전',
+          //         style:TextStyle(color:Colors.black),
+          //       ),
+          //       onTap: ()=>Navigator.push(context, MaterialPageRoute(builder:(context)=>PointChargePage()))
+          //   ),
+          // )
+        ],
+        crossAxisAlignment: CrossAxisAlignment.start,
       )
     ],
-    crossAxisAlignment: CrossAxisAlignment.start,
   );
 }
 

@@ -87,22 +87,24 @@ class MyPageState extends State<MyPage> {
         Card(
           child: Row(
             children: [
-              Container(
-                child: Image.asset("assets/user_default_image.png"),
-                width: 60,
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '이름 : ${fp.getUserInfo()['name']}'
-                  ),
-                  Text(
-                    '이메일 : ${fp.getUserInfo()['email']}'
-                  )
-                ],
-              )
-            ],
+            SizedBox(
+              width: 15,
+            ),
+            Container(
+              child: Image.asset("assets/user_default_image.png"),
+              width: grid_height / 2,
+            ),
+            SizedBox(
+              width: 15,
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('이름 : ${fp.getUserInfo()['name']}'),
+                Text('이메일 : ${fp.getUserInfo()['email']}')
+              ],
+            )
+          ],
           )
         ),
         Row(
@@ -152,13 +154,13 @@ class MyPageState extends State<MyPage> {
     else{
       switch (fp.getUserInfo()['service']) {
         case 'periodic20000':
-          service = "정기권 - 20000만원";
+          service = "정기권 20000원";
           break;
         case 'periodic30000':
-          service = "정기권 - 30000만원";
+          service = "정기권 30000원";
           break;
         case 'periodic40000':
-          service = "정기권 - 40000만원";
+          service = "정기권 40000원";
           break;
       }
       return Card(

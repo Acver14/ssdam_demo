@@ -9,15 +9,17 @@ class ReservationButton extends StatelessWidget {
   final double borderRadius;
   final VoidCallback onPressed;
   final Color splashColor;
+  final Color color;
 
   ReservationButton(
       {this.onPressed,
-        this.text,
-        this.textStyle,
-        this.splashColor,
-        this.darkMode = false,
-        this.borderRadius = defaultBorderRadius,
-        Key key})
+      this.text,
+      this.textStyle,
+      this.splashColor,
+      this.darkMode = false,
+      this.color = COLOR_SSDAM,
+      this.borderRadius = defaultBorderRadius,
+      Key key})
       : assert(text != null),
         super(key: key);
 
@@ -26,24 +28,24 @@ class ReservationButton extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
         child: RaisedButton(
-            color: COLOR_SSDAM,
+            color: this.color,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(5.0),
             ),
             splashColor: splashColor,
             onPressed: this.onPressed,
-            child:  Padding(
-                  padding: const EdgeInsets.fromLTRB(0.0, 8.0, 8.0, 8.0),
-                  child: Text(
-                    text,
-                    style: textStyle ?? TextStyle(
-                      fontSize: 18.0,
-                      fontFamily: "Roboto",
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
-                    ),
-                  ),
-                )
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(0.0, 8.0, 8.0, 8.0),
+              child: Text(
+                text,
+                style: textStyle ?? TextStyle(
+                  fontSize: 18.0,
+                  fontFamily: "Roboto",
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+              ),
+            )
         )
     );
   }

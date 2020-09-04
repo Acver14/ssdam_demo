@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:ssdam_demo/customWidget/side_drawer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ssdam_demo/customWidget/loading_widget.dart';
+import 'package:popup_box/popup_box.dart';
 import 'package:ssdam_demo/style/customColor.dart';
 import 'package:ssdam_demo/customClass/size_constant.dart';
 
@@ -124,19 +125,47 @@ class ReservationListPageState extends State<ReservationListPage> {
               children: <Widget>[
                 new Text(doc["name"]),
                 new IconButton(
-                    icon: new Icon(Icons.delete),
-                    onPressed: () async {
-                      await Firestore.instance
-                          .collection('reservationList')
-                          .document(fp
-                          .getUser()
-                          .email)
-                          .collection('reservationInfo')
-                          .document(reservationID)
-                          .delete();
-                      print('예약 삭제 성공');
-                    })
-              ],
+                icon: new Icon(Icons.delete),
+                onPressed: () async {
+                  if ((doc["reservationTime"] - Timestamp.now()).hour > 3) {
+                    PopupBox.showPopupBox(
+                        context: context,
+                        button: MaterialButton(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          color: Colors.blue,
+                          child: Text(
+                            'Ok',
+                            style: TextStyle(fontSize: 20),
+                          ),
+                          onPressed: () async {
+                            await Firestore.instance
+                                .collection('reservationList')
+                                .document(fp.getUser().email)
+                                .collection('reservationInfo')
+                                .document(reservationID)
+                                .delete();
+                            setState(() {
+                              Loading();
+                            });
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                        willDisplayWidget: Column(
+                          children: <Widget>[
+                            Text(
+                              '예약을 취소합니다.',
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.black),
+                            ),
+                          ],
+                        ));
+                  }
+
+                  print('예약 삭제 성공');
+                })
+          ],
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

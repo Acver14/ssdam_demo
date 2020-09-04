@@ -104,5 +104,19 @@
       <key>NSAllowsArbitraryLoads</key>
       <true/>
     </dict>
+
+<key>CFBundleURLTypes</key>
+<array>
+<dict>
+<key>CFBundleURLSchemes</key>
+<array>
+<string>fb313973653225863</string>
+</array>
+</dict>
+</array>
+<key>FacebookAppID</key>
+<string>313973653225863</string>
+ <key>FacebookDisplayName</key>
+ <string>쓰담</string>
 </dict>
 </plist>

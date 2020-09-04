@@ -6,7 +6,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+
+// import 'package:kakao_flutter_sdk/auth.dart';
+// import 'package:kakao_flutter_sdk/user.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:http/http.dart';
 
 Logger logger = Logger();
 
@@ -51,15 +55,19 @@ class FirebaseProvider with ChangeNotifier {
       AuthResult result = await fAuth.createUserWithEmailAndPassword(
           email: email, password: password);
       if (result.user != null) {
-        // 인증 메일 발송
-        result.user.sendEmailVerification();
         print(name);
         //이름 입력값 추가 (이후 카카오, 네이버에서도 같은 역할 필요할듯)
         await Firestore.instance
             .collection('userInfo')
             .document(result.user.email.toString())
             .setData({'name': name, 'email': email}, merge: true);
+        //사용자 이름 업데이트
+        UserUpdateInfo uui = UserUpdateInfo();
+        uui.displayName = name;
+        await result.user.updateProfile(uui);
         // 새로운 계정 생성이 성공하였으므로 기존 계정이 있을 경우 로그아웃 시킴
+        // 인증 메일 발송
+        result.user.sendEmailVerification();
         signOut();
         return true;
       }
@@ -129,6 +137,45 @@ class FirebaseProvider with ChangeNotifier {
       return false;
     }
   }
+
+  //
+  // Future<bool> signInWithKakaoAccount() async{
+  //   final installed = await isKakaoTalkInstalled();
+  //   print('kakao Install : ' + installed.toString());
+  //   var code, token;
+  //
+  //   try{
+  //     if(installed){
+  //       try{
+  //         code = await AuthCodeClient.instance.requestWithTalk();   // AuthCode
+  //         try{
+  //           token = await AuthApi.instance.issueAccessToken(code);
+  //           await AccessTokenStore.instance.toStore(token);
+  //           print(token);
+  //         }catch(e){
+  //           print("error on issuing access token: $e");
+  //           return false;
+  //         }
+  //       }catch(e){
+  //         print(e);
+  //       }
+  //     }else{
+  //       code = await AuthCodeClient.instance.request();
+  //       try{
+  //         token = await AuthApi.instance.issueAccessToken(code);
+  //         await AccessTokenStore.instance.toStore(token);
+  //         print(token);
+  //       }catch(e){
+  //         print("error on issuing access token: $e");
+  //         return false;
+  //       }
+  //     }
+  //     return true;
+  //   }catch(e){
+  //     return false;
+  //   }
+  //   //fAuth.signInWithCustomToken(token: token);
+  // }
 
   Future<void> setUserInfo() async {
     await Firestore.instance

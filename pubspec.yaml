@@ -48,7 +48,6 @@ dependencies:
 
   #auth
   firebase_auth: ^0.14.0+5
-  #kakao_flutter_sdk: ^0.4.2
 
   #firestore
   firebase_storage: ^3.1.5

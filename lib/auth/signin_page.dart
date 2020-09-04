@@ -6,6 +6,8 @@ import 'package:ssdam_demo/auth/signup_page.dart';
 import 'package:ssdam_demo/authButton/kakao.dart';
 import 'package:ssdam_demo/authButton/naver.dart';
 import 'package:ssdam_demo/authButton/google.dart';
+import 'package:ssdam_demo/authButton/facebook.dart';
+import 'package:ssdam_demo/authButton/apple.dart';
 import 'package:ssdam_demo/style/customColor.dart';
 //import 'package:ssdam_demo/auth/kakao_login_page.dart';
 
@@ -126,10 +128,10 @@ class SignInPageState extends State<SignInPage> {
                     Padding(
                       padding: const EdgeInsets.all(10.0),
                       child: Text(
-                        "메일 인증이 완료되지 않았씁니다."
-                            "\n메일 인증을 완료해주시기 바랍니다.",
-                        style: TextStyle(color: Colors.white),
-                      ),
+                          "메일 인증이 완료되지 않았습니다."
+                          "\n메일 인증을 완료해주시기 바랍니다.",
+                          style: TextStyle(color: Colors.white),
+                        ),
                     ),
                     RaisedButton(
                       color: Colors.lightBlue[400],
@@ -167,18 +169,26 @@ class SignInPageState extends State<SignInPage> {
               ),
               GoogleSignInButton(
                 onPressed: () {
-                  FocusScope.of(context).requestFocus(new FocusNode()); // 키보드 감춤
+                  FocusScope.of(context).requestFocus(
+                      new FocusNode()); // 키보드 감춤
                   _signInWithGoogle();
                 },
               ),
-              KakaoSignInButton(
-                onPressed: () {}//=> Navigator.push(context, MaterialPageRoute(builder: (context) => KakaoLoginTest())),
+              AppleSignInButton(
+                onPressed: () {},
               ),
-              NaverSignInButton(
-                onPressed: () => print('naver'),
+              FacebookSignInButton(
+                  onPressed: () {}
               ),
+              // KakaoSignInButton(
+              //   onPressed: () {}//=> Navigator.push(context, MaterialPageRoute(builder: (context) => KakaoLoginTest())),
+              // ),
+              // NaverSignInButton(
+              //   onPressed: () => print('naver'),
+              // ),
               Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                margin: const EdgeInsets.symmetric(
+                    horizontal: 20, vertical: 10),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
@@ -208,7 +218,7 @@ class SignInPageState extends State<SignInPage> {
         content: Row(
           children: <Widget>[
             CircularProgressIndicator(),
-            Text("   Signing-In...")
+            Text("로그인 중입니다...")
           ],
         ),
       ));
@@ -226,7 +236,7 @@ class SignInPageState extends State<SignInPage> {
         content: Row(
           children: <Widget>[
             CircularProgressIndicator(),
-            Text("   Signing-In...")
+            Text("로그인 중입니다...")
           ],
         ),
       ));
@@ -234,6 +244,22 @@ class SignInPageState extends State<SignInPage> {
     _scaffoldKey.currentState.hideCurrentSnackBar();
     if (result == false) showLastFBMessage();
   }
+
+  //
+  // void _signInWithKakao() async {
+  //   _scaffoldKey.currentState
+  //     ..hideCurrentSnackBar()
+  //     ..showSnackBar(SnackBar(
+  //       duration: Duration(seconds: 10),
+  //       content: Row(
+  //         children: <Widget>[
+  //           CircularProgressIndicator(),
+  //           Text("로그인 중입니다...")
+  //         ],
+  //       ),
+  //     ));
+  //   bool result = await _signInWithKakao();
+  // }
 
   getRememberInfo() async {
     logger.d(doRemember);

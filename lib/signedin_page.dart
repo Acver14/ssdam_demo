@@ -29,7 +29,7 @@ SignedInPageState pageState;
 final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
 var _flutterLocalNotificationsPlugin;
 
-final List<String> eventList = ['assets/event/event_demo.png'];
+final List<String> eventList = ['assets/event/event_0.png'];
 
 class SignedInPage extends StatefulWidget {
   @override
@@ -44,7 +44,7 @@ class SignedInPageState extends State<SignedInPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _getTrash = false;
   int _tickets;
-  bool _loaded = false;
+  DateTime _reservation_time;
   var _icon_button = "close_trash.png";
   TextEditingController detailAddressCont = TextEditingController();
   TextEditingController customerRequestCont = TextEditingController();
@@ -87,24 +87,25 @@ class SignedInPageState extends State<SignedInPage> {
     firebaseCloudMessaging_Listeners();
     getRememberAddr();
     getRememberRequests();
-    DateTime tmpTime = DateTime.now();
-    log.d('before: ${tmpTime}');
-    if (tmpTime.hour > 8 && tmpTime.hour < 18) {
-      if (tmpTime.hour == 18 && tmpTime.minute > 29) {
-        reservationInfo.setReservationTime(
-            DateTime(tmpTime.year, tmpTime.month, tmpTime.day + 1, 9, 0, 0));
-      } else {
-        reservationInfo.setReservationTime(tmpTime.add(Duration(minutes: 30)));
-      }
-    } else if (tmpTime.hour > 17) {
-      reservationInfo.setReservationTime(
-          DateTime(tmpTime.year, tmpTime.month, tmpTime.day + 1, 9, 0, 0));
-    } else if (tmpTime.hour < 9) {
-      reservationInfo.setReservationTime(
-          DateTime(tmpTime.year, tmpTime.month, tmpTime.day + 1, 9, 0, 0));
-    }
+    setReservationTime();
     log.d(reservationInfo.getReservationTime());
     log.d(reservationInfo.getAddress());
+  }
+
+  setReservationTime() {
+    DateTime tmpTime = DateTime.now();
+    log.d('before: ${tmpTime}');
+    if (tmpTime.hour > 8 && tmpTime.hour < 12 ||
+        tmpTime.hour > 17 && tmpTime.hour < 19) {
+      _reservation_time = tmpTime.add(Duration(hours: 1));
+    } else if (tmpTime.hour >= 12 && tmpTime.hour <= 17) {
+      _reservation_time =
+          DateTime(tmpTime.year, tmpTime.month, tmpTime.day, 18, 0, 0, 0, 0);
+    } else {
+      tmpTime = tmpTime.add(Duration(days: 1));
+      _reservation_time =
+          DateTime(tmpTime.year, tmpTime.month, tmpTime.day, 9, 0, 0, 0, 0);
+    }
   }
 
   getRememberAddr() async {
@@ -168,8 +169,8 @@ class SignedInPageState extends State<SignedInPage> {
       drawer: sideDrawer(context, fp),
       body: Wrap(
         children: <Widget>[
-          SizedBox(
-            height: statusBarHeight,
+          Container(
+              child: Padding(padding: EdgeInsets.only(top: statusBarHeight))
           ),
           CarouselSlider(
             options: CarouselOptions(
@@ -273,9 +274,6 @@ class SignedInPageState extends State<SignedInPage> {
                           '죄송합니다.\n현재 서비스는 광진구에서만 진행하고 있습니다.',
                           style: TextStyle(fontSize: 16, color: Colors.black),
                         ),
-                        TextField(
-                          controller: detailAddressCont,
-                        )
                       ],
                     ));
               }
@@ -310,6 +308,9 @@ class SignedInPageState extends State<SignedInPage> {
                           '상세주소를 입력해주세요.\n(상세주소가 없을 경우 생략)',
                           style: TextStyle(fontSize: 16, color: Colors.black),
                         ),
+                        TextField(
+                          controller: detailAddressCont,
+                        )
                       ],
                     ));
               }
@@ -318,69 +319,83 @@ class SignedInPageState extends State<SignedInPage> {
         ), // input address
         ReservationButton(
             text: DateFormat('yyyy년 MM월 dd일 kk시 mm분').format(
-                reservationInfo.getReservationTime() ??
-                    DateTime.now().add(Duration(minutes: 30))),
+              //reservationInfo.getReservationTime() ??
+                _reservation_time),
             onPressed: () {
               print('pressed time button');
               showDatePicker(
-                      context: context,
-                      initialDate: reservationInfo.getReservationTime() == null
-                          ? DateTime.now()
-                          : reservationInfo.getReservationTime(),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(Duration(days: 30)))
+                  context: context,
+                  initialDate: reservationInfo.getReservationTime() == null
+                      ? _reservation_time
+                      : reservationInfo.getReservationTime(),
+                  firstDate: _reservation_time,
+                  lastDate: _reservation_time.add(Duration(days: 30)))
                   .then((date) {
                 setState(() {
                   if (date != null) reservationInfo.setReservationTime(date);
                   log.d(reservationInfo.getReservationTime());
                   print(reservationInfo.getReservationTime());
 
-                  DateTime t = DateTime.now().add(Duration(minutes: 30));
+                  DateTime t = DateTime.now().add(Duration(hours: 1));
                   showTimePicker(
                     context: context,
                     initialTime: TimeOfDay(
                       hour: t.hour,
                       minute: t.minute,
                     ),
-                  ).then((time) async {
+                  ).then((time) {
                     setState(() {
                       if (time != null) {
+                        print(time.hour.toString());
                         if ((time.hour > 9 && time.hour < 13) ||
                             (time.hour > 18 && time.hour < 20)) {
-                          DateTime tmp = reservationInfo.getReservationTime();
-                          reservationInfo.setReservationTime(DateTime(tmp.year,
-                              tmp.month, tmp.day, time.hour, time.minute));
+                          if (time.hour > DateTime
+                              .now()
+                              .hour) {
+                            DateTime tmp = _reservation_time;
+                            reservationInfo.setReservationTime(
+                                DateTime(tmp.year,
+                                    tmp.month, tmp.day, time.hour,
+                                    time.minute));
+                          }
+                          return;
                         }
-                        print(time.hour.toString());
+                        else {
+                          PopupBox.showPopupBox(
+                              context: context,
+                              button: MaterialButton(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                color: Colors.blue,
+                                child: Text(
+                                  'Ok',
+                                  style: TextStyle(fontSize: 20),
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    this.setReservationTime();
+                                    print(_reservation_time);
+                                  });
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                              willDisplayWidget: Column(
+                                children: <Widget>[
+                                  Text(
+                                    '예약 가능 시간이 아닙니다.\n 예약 가능 시간은 오전 9시부터 13시까지, 18시부터 20시 사이입니다.',
+                                    style: TextStyle(
+                                        fontSize: 16, color: Colors.black),
+                                  ),
+                                ],
+                              ));
+                        }
                       }
+                      reservationInfo.setReservationTime(_reservation_time);
                       print('reservationTime: ${reservationInfo
                           .getReservationTime()}');
                     }
                     );
-                    await PopupBox.showPopupBox(
-                        context: context,
-                        button: MaterialButton(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          color: Colors.blue,
-                          child: Text(
-                            'Ok',
-                            style: TextStyle(fontSize: 20),
-                          ),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                        willDisplayWidget: Column(
-                          children: <Widget>[
-                            Text(
-                              '예약 가능 시간이 아닙니다.\n 예약 가능 시간은 오전 9시부터 13시까지, 18시부터 20시 사이입니다.',
-                              style: TextStyle(
-                                  fontSize: 16, color: Colors.black),
-                            ),
-                          ],
-                        ));
                   });
                 });
               });
@@ -560,7 +575,7 @@ class SignedInPageState extends State<SignedInPage> {
               child: ClipRRect(
                   borderRadius: BorderRadius.all(Radius.circular(5.0)),
                   child: FlatButton(
-                    child: Image.asset(item, fit: BoxFit.cover, width: 1000.0),
+                    child: Image.asset(item, fit: BoxFit.fill, width: 1000.0),
                     onPressed: () {},
                   )),
             ),
