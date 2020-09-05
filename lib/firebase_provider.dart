@@ -4,13 +4,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 import 'package:logger/logger.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:ssdam_demo/auth/enroll_email_page.dart';
 
 // import 'package:kakao_flutter_sdk/auth.dart';
 // import 'package:kakao_flutter_sdk/user.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:http/http.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 Logger logger = Logger();
 
@@ -18,16 +21,18 @@ class FirebaseProvider with ChangeNotifier {
   final FirebaseAuth fAuth = FirebaseAuth.instance; // Firebase 인증 플러그인의 인스턴스
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   AuthResult authResult;
+  final FacebookLogin facebookLogin = FacebookLogin();
   FirebaseUser _user; // Firebase에 로그인 된 사용자
   var _user_info = Map<String, dynamic>();
+  var token;
   String _lastFirebaseResponse = ""; // Firebase로부터 받은 최신 메시지(에러 처리용)
   FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
 
   FirebaseProvider() {
     logger.d("init FirebaseProvider");
     _prepareUser();
-    _firebaseMessaging.getToken().then((token) {
-      print('device token : ${token}');
+    _firebaseMessaging.getToken().then((_token) {
+      token = _token;
     });
   }
 
@@ -59,7 +64,7 @@ class FirebaseProvider with ChangeNotifier {
         //이름 입력값 추가 (이후 카카오, 네이버에서도 같은 역할 필요할듯)
         await Firestore.instance
             .collection('userInfo')
-            .document(result.user.email.toString())
+            .document(result.user.uid.toString())
             .setData({'name': name, 'email': email}, merge: true);
         //사용자 이름 업데이트
         UserUpdateInfo uui = UserUpdateInfo();
@@ -68,6 +73,10 @@ class FirebaseProvider with ChangeNotifier {
         // 새로운 계정 생성이 성공하였으므로 기존 계정이 있을 경우 로그아웃 시킴
         // 인증 메일 발송
         result.user.sendEmailVerification();
+        // await Firestore.instance
+        //     .collection('fcmTokenInfo')
+        //     .document(_user_info['email'])
+        //     .setData({'token': _token}, merge: false);
         signOut();
         return true;
       }
@@ -88,6 +97,10 @@ class FirebaseProvider with ChangeNotifier {
         setUser(result.user);
         await setUserInfo();
         logger.d(getUser());
+        // await Firestore.instance
+        //     .collection('fcmTokenInfo')
+        //     .document(_user_info['email'])
+        //     .setData({'token': _token}, merge: false);
         return true;
       }
       return false;
@@ -120,15 +133,63 @@ class FirebaseProvider with ChangeNotifier {
       assert(user.uid == currentUser.uid);
       setUser(user);
 
-      var _token;
-      await _firebaseMessaging.getToken().then((token) {
-        _token = token;
-      });
-      await Firestore.instance
-          .collection('fcmTokenInfo')
-          .document(_user_info['email'])
-          .setData({'token': _token}, merge: true);
+      // await Firestore.instance
+      //     .collection('fcmTokenInfo')
+      //     .document(_user_info['email'])
+      //     .setData({'token': _token}, merge: false);
       //await setUserInfo();
+      return true;
+    } on Exception catch (e) {
+      logger.e(e.toString());
+      List<String> result = e.toString().split(", ");
+      setLastFBMessage(result[1]);
+      return false;
+    }
+  }
+
+  Future<bool> signInWithFacebookAccount(BuildContext context) async {
+    try {
+      var log = Logger();
+      FacebookLoginResult result =
+          await facebookLogin.logIn(['email', 'public_profile']);
+      AuthCredential credential = FacebookAuthProvider.getCredential(
+          accessToken: result.accessToken.token);
+      authResult = await fAuth.signInWithCredential(credential);
+      final graphResponse = await http.get(
+          'https://graph.facebook.com/me?fields=name,email&access_token=${result.accessToken.token}');
+      final profile = jsonDecode(graphResponse.body);
+      profile['email'] = null;
+      if (profile['email'] == null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EnrollEmailPage(),
+          ), //MaterialPageRoute
+        );
+      }
+      if (result != null) {
+        setUser(authResult.user);
+        await setUserInfo();
+        logger.d(getUser());
+        // await Firestore.instance
+        //     .collection('fcmTokenInfo')
+        //     .document(_user_info['email'])
+        //     .setData({'token': _token}, merge: false);
+        return true; // login success
+      }
+    } on Exception catch (e) {
+      logger.e(e.toString());
+      List<String> result = e.toString().split(", ");
+      setLastFBMessage(result[1]);
+      return false;
+    }
+  }
+
+  Future<bool> enroll_email(String email) async {
+    try {
+      await _user.updateEmail(email);
+      await _user.sendEmailVerification();
+      signOut();
       return true;
     } on Exception catch (e) {
       logger.e(e.toString());
@@ -180,7 +241,7 @@ class FirebaseProvider with ChangeNotifier {
   Future<void> setUserInfo() async {
     await Firestore.instance
         .collection('userInfo')
-        .document(_user.email)
+        .document(_user.uid)
         .get()
         .then((value) {
       print(value);

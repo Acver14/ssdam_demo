@@ -55,7 +55,7 @@ class ReservationListPageState extends State<ReservationListPage> {
   Future<QuerySnapshot> Loading() async {
     return reservation_infos = await Firestore.instance
         .collection('reservationList')
-        .document(fp.getUser().email)
+        .document(fp.getUser().uid)
         .collection('reservationInfo')
         .getDocuments();
   }
@@ -142,7 +142,9 @@ class ReservationListPageState extends State<ReservationListPage> {
                           onPressed: () async {
                             await Firestore.instance
                                 .collection('reservationList')
-                                .document(fp.getUser().email)
+                                .document(fp
+                                .getUser()
+                                .uid)
                                 .collection('reservationInfo')
                                 .document(reservationID)
                                 .delete();

@@ -50,7 +50,7 @@ class ChargeListPageState extends State<ChargeListPage> {
   Future<QuerySnapshot> Loading() async {
     return charge_infos = await Firestore.instance
         .collection('chargeLog')
-        .document(fp.getUser().email)
+        .document(fp.getUserInfo()['email'])
         .collection('chargeInfo')
         .getDocuments();
   }

@@ -3,7 +3,7 @@ import 'package:ssdam_demo/firebase_provider.dart';
 import 'package:ssdam_demo/intro_page.dart';
 import 'package:ssdam_demo/signedin_page.dart';
 import 'package:provider/provider.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 AuthPageState pageState;
 

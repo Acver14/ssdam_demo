@@ -40,9 +40,13 @@ class ReservationInfoProvider with ChangeNotifier{
   DateTime getApplicationTime(){return _applicationTime;}
 
   Future<void> saveReservationInfo(String rType) async {
-    Firestore.instance.collection('reservationList')
-        .document(_email).collection('reservationInfo')
-        .document(Timestamp.fromMillisecondsSinceEpoch(_applicationTime.millisecondsSinceEpoch).toString())
+    Firestore.instance
+        .collection('reservationList')
+        .document(_uid)
+        .collection('reservationInfo')
+        .document(Timestamp.fromMillisecondsSinceEpoch(
+                _applicationTime.millisecondsSinceEpoch)
+            .toString())
         .setData({
       "name": _name,
       "email": _email,

@@ -37,8 +37,11 @@ class MyPageState extends State<MyPage> {
     await fp.setUserInfo();
     _user_info = fp.getUserInfo();
 
-    reservation_infos = await Firestore.instance.collection('reservationList')
-        .document(fp.getUser().email).collection('reservationInfo').getDocuments();
+    reservation_infos = await Firestore.instance
+        .collection('reservationList')
+        .document(fp.getUser().uid)
+        .collection('reservationInfo')
+        .getDocuments();
     if (_user_info != null) {
       return _user_info;
     }
@@ -144,10 +147,11 @@ class MyPageState extends State<MyPage> {
     var service;
 
     if(fp.getUserInfo()['service'] == null){
-      service = ' - ';
       return Card(
           child: ListTile(
-
+            title: Text(
+                '이용 중인 서비스가 없습니다.'
+            ),
           )
       );
     }

@@ -32,7 +32,7 @@ Widget sideDrawer(BuildContext context, FirebaseProvider fp) {
       Column(
         children: <Widget>[
           Container(
-            height: 160,
+            height: 170,
             child: DrawerHeader(
                 child: Wrap(
                   children: [
@@ -226,12 +226,8 @@ Widget userInterface(BuildContext context) {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Text(
-            '${fp
-                .getUser()
-                .displayName}님 환영합니다!',
-            style: TextStyle(
-                color: Colors.white
-            ),
+            '${fp.getUserInfo()['name']}님 환영합니다!',
+            style: TextStyle(color: Colors.white),
           ),
           // Text(
           //     'Lv. ${fp.getUserInfo()['level']}'

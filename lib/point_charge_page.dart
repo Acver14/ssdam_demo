@@ -182,11 +182,11 @@ class PointChargePageState extends State<PointChargePage> {
                                   mainAxisAlignment:
                                   MainAxisAlignment.spaceBetween,
                                   children: <Widget>[
-                                    Text('이용권 8'),
+                                    Text('이용권 : 8'),
                                     RaisedButton(
                                       child: Text('40000원',
                                           style:
-                                          TextStyle(color: Colors.white)),
+                                              TextStyle(color: Colors.white)),
                                       color: Color.fromRGBO(0, 100, 0, 1),
                                       onPressed: () {
                                         Navigator.push(

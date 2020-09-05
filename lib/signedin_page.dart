@@ -106,6 +106,12 @@ class SignedInPageState extends State<SignedInPage> {
       _reservation_time =
           DateTime(tmpTime.year, tmpTime.month, tmpTime.day, 9, 0, 0, 0, 0);
     }
+    if (_reservation_time.weekday == 6) {
+      _reservation_time = _reservation_time.add(Duration(days: 2));
+    } else if (_reservation_time.weekday == 7) {
+      _reservation_time = _reservation_time.add(Duration(days: 1));
+    }
+    reservationInfo.setReservationTime(_reservation_time);
   }
 
   getRememberAddr() async {
@@ -136,12 +142,29 @@ class SignedInPageState extends State<SignedInPage> {
     prefs.setString("recentlyCustomerRequests", rq ?? '');
   }
 
+  setDeviceToken() async {
+    await Firestore.instance
+        .collection('fcmTokenInfo')
+        .document(fp
+        .getUser()
+        .uid)
+        .setData({'token': fp.token});
+    log.d('device token save');
+  }
+
   Future<Map<String, dynamic>> Loading() async {
     Map<String, dynamic> _user_info = null;
     await fp.setUserInfo();
+    await setDeviceToken();
     _user_info = fp.getUserInfo();
     reservationInfo.setInitialInfo(
-        fp.getUser().displayName, fp.getUser().uid, fp.getUser().email);
+        fp
+            .getUser()
+            .displayName, fp
+        .getUser()
+        .uid, fp
+        .getUser()
+        .email);
     if (_user_info != null) {
       return _user_info;
     }
@@ -324,17 +347,22 @@ class SignedInPageState extends State<SignedInPage> {
             onPressed: () {
               print('pressed time button');
               showDatePicker(
-                  context: context,
-                  initialDate: reservationInfo.getReservationTime() == null
-                      ? _reservation_time
-                      : reservationInfo.getReservationTime(),
-                  firstDate: _reservation_time,
-                  lastDate: _reservation_time.add(Duration(days: 30)))
+                context: context,
+                initialDate: reservationInfo.getReservationTime() == null
+                    ? _reservation_time
+                    : reservationInfo.getReservationTime(),
+                firstDate: _reservation_time,
+                lastDate: _reservation_time.add(Duration(days: 30)),
+                selectableDayPredicate: (DateTime val) =>
+                val.weekday == 7 || val.weekday == 6 ? false : true,)
                   .then((date) {
                 setState(() {
-                  if (date != null) reservationInfo.setReservationTime(date);
-                  log.d(reservationInfo.getReservationTime());
-                  print(reservationInfo.getReservationTime());
+                  if (date != null) {
+                    _reservation_time = DateTime(
+                        date.year, date.month, date.day, _reservation_time.hour,
+                        _reservation_time.minute);
+                  }
+                  reservationInfo.setReservationTime(_reservation_time);
 
                   DateTime t = DateTime.now().add(Duration(hours: 1));
                   showTimePicker(
@@ -346,9 +374,12 @@ class SignedInPageState extends State<SignedInPage> {
                   ).then((time) {
                     setState(() {
                       if (time != null) {
-                        print(time.hour.toString());
-                        if ((time.hour > 9 && time.hour < 13) ||
-                            (time.hour > 18 && time.hour < 20)) {
+                        log.d(time.hour.toString());
+                        if ((time.hour >= 9 && time.hour < 13) ||
+                            (time.hour >= 18 && time.hour < 20)) {
+                          log.d(DateTime
+                              .now()
+                              .hour);
                           if (time.hour > DateTime
                               .now()
                               .hour) {
@@ -357,6 +388,10 @@ class SignedInPageState extends State<SignedInPage> {
                                 DateTime(tmp.year,
                                     tmp.month, tmp.day, time.hour,
                                     time.minute));
+                            _reservation_time =
+                                reservationInfo.getReservationTime();
+                            log.d('${reservationInfo
+                                .getReservationTime()} ${_reservation_time}');
                           }
                           return;
                         }
@@ -383,7 +418,7 @@ class SignedInPageState extends State<SignedInPage> {
                               willDisplayWidget: Column(
                                 children: <Widget>[
                                   Text(
-                                    '예약 가능 시간이 아닙니다.\n 예약 가능 시간은 오전 9시부터 13시까지, 18시부터 20시 사이입니다.',
+                                    '예약 가능 시간이 아닙니다.\n 예약 가능 시간은 \n09:00 ~ 12:59,\n18:00 ~ 19:59입니다.',
                                     style: TextStyle(
                                         fontSize: 16, color: Colors.black),
                                   ),
@@ -461,35 +496,79 @@ class SignedInPageState extends State<SignedInPage> {
         if (reservationInfo
             .getAddress()
             .length > 0) {
-          await reservationInfo.saveReservationInfo("collect");
-          setState(() {
-            _tickets -= 1;
-          });
-          Firestore.instance
-              .collection('userInfo')
-              .document(fp
-              .getUser()
-              .email)
-              .updateData({"tickets": _tickets});
           return PopupBox.showPopupBox(
-              context: context,
-              button: MaterialButton(
-                minWidth: grid_width * 5,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                color: COLOR_SSDAM,
-                child: Text(
-                  'Ok',
-                  style: TextStyle(color: Colors.white, fontSize: 20),
-                ),
+            context: context,
+            button: Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  MaterialButton(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    color: COLOR_SSDAM,
+                    child: Text(
+                      '취소',
+                      style: TextStyle(color: Colors.white, fontSize: 20),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                  SizedBox(width: 10),
+                  MaterialButton(
+                    //minWidth: grid_width * 5,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    color: COLOR_SSDAM,
+                    child: Text(
+                      '확인',
+                      style: TextStyle(color: Colors.white, fontSize: 20),
+                    ),
+                    onPressed: () async {
+                      await reservationInfo.saveReservationInfo("collect");
+                      setState(() {
+                        _tickets -= 1;
+                      });
+                      Firestore.instance
+                          .collection('userInfo')
+                          .document(fp
+                          .getUser()
+                          .uid)
+                          .updateData({"tickets": _tickets});
+                      Navigator.pop(context);
+                      print('예약 완료');
+                      return PopupBox.showPopupBox(
+                        context: context,
+                        button: MaterialButton(
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                        willDisplayWidget: Center(
+                            child: Text(
+                              '${fp.getUserInfo()['name']}님\n'
+                                  '${reservationInfo.getReservationTime()}\n'
+                              //'${reservationInfo.getAddress()} ${reservationInfo.getDetailedAddress()}\n'
+                                  '예약이 완료되었습니다.',
+                              style: TextStyle(
+                                  fontSize: 16, color: Colors.black),
+                            )),
+                      );
+                    },
+                  ),
+                ],
               ),
-              willDisplayWidget: Center(
-                  child: Text(
-                    '${fp.getUserInfo()['name']}님\n${reservationInfo
-                        .getReservationTime()}\n 쓰레기통 수거 예약이 완료되었습니다.',
-                    style: TextStyle(fontSize: 16, color: Colors.black),
-                  )));
+            ),
+            willDisplayWidget: Center(
+                child: Text(
+                  '${fp.getUserInfo()['name']}님\n'
+                      '${reservationInfo.getReservationTime()}\n'
+                      '${reservationInfo.getAddress()} ${reservationInfo
+                      .getDetailedAddress()}\n'
+                      '쓰레기통 수거 예약 하시겠습니까?',
+                  style: TextStyle(fontSize: 16, color: Colors.black),
+                )),
+          );
         }
         else {
           return PopupBox.showPopupBox(
@@ -541,7 +620,7 @@ class SignedInPageState extends State<SignedInPage> {
           .collection('userInfo')
           .document(fp
           .getUser()
-          .email)
+          .uid)
           .updateData({"getTrash?": _getTrash});
       log.d('save to firestore');
       return PopupBox.showPopupBox(

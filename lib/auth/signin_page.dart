@@ -8,6 +8,7 @@ import 'package:ssdam_demo/authButton/naver.dart';
 import 'package:ssdam_demo/authButton/google.dart';
 import 'package:ssdam_demo/authButton/facebook.dart';
 import 'package:ssdam_demo/authButton/apple.dart';
+import 'enroll_email_page.dart';
 import 'package:ssdam_demo/style/customColor.dart';
 //import 'package:ssdam_demo/auth/kakao_login_page.dart';
 
@@ -167,30 +168,29 @@ class SignInPageState extends State<SignInPage> {
                   },
                 ),
               ),
-              GoogleSignInButton(
-                onPressed: () {
-                  FocusScope.of(context).requestFocus(
-                      new FocusNode()); // 키보드 감춤
-                  _signInWithGoogle();
-                },
-              ),
-              AppleSignInButton(
-                onPressed: () {},
-              ),
-              FacebookSignInButton(
-                  onPressed: () {}
-              ),
-              // KakaoSignInButton(
-              //   onPressed: () {}//=> Navigator.push(context, MaterialPageRoute(builder: (context) => KakaoLoginTest())),
-              // ),
-              // NaverSignInButton(
-              //   onPressed: () => print('naver'),
-              // ),
-              Container(
-                margin: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+          GoogleSignInButton(
+            onPressed: () {
+              FocusScope.of(context).requestFocus(new FocusNode()); // 키보드 감춤
+              _signInWithGoogle();
+            },
+          ),
+          AppleSignInButton(
+            onPressed: () {},
+          ),
+          FacebookSignInButton(onPressed: () {
+            FocusScope.of(context).requestFocus(new FocusNode()); // 키보드 감춤
+            _signInWithFacebook();
+          }),
+          // KakaoSignInButton(
+          //   onPressed: () {}//=> Navigator.push(context, MaterialPageRoute(builder: (context) => KakaoLoginTest())),
+          // ),
+          // NaverSignInButton(
+          //   onPressed: () => print('naver'),
+          // ),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     FlatButton(
                       child: Text(
@@ -243,6 +243,23 @@ class SignInPageState extends State<SignInPage> {
     bool result = await fp.signInWithGoogleAccount();
     _scaffoldKey.currentState.hideCurrentSnackBar();
     if (result == false) showLastFBMessage();
+  }
+
+  void _signInWithFacebook() async {
+    _scaffoldKey.currentState
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        duration: Duration(seconds: 10),
+        content: Row(
+          children: <Widget>[
+            CircularProgressIndicator(),
+            Text("로그인 중입니다...")
+          ],
+        ),
+      ));
+    bool result = await fp.signInWithFacebookAccount(context);
+    _scaffoldKey.currentState.hideCurrentSnackBar();
+    if (result == -1) showLastFBMessage();
   }
 
   //
