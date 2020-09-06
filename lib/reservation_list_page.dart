@@ -95,7 +95,7 @@ class ReservationListPageState extends State<ReservationListPage> {
                       return new ListView.builder(
                         scrollDirection: Axis.vertical,
                         controller: _infiniteController,
-                        itemCount: snapshot.data.documents.length + 1,
+                        itemCount: snapshot.data.documents.length,
                         itemBuilder: (context, index) {
                           return getReservationInfo(
                               index, snapshot.data.documents.length);

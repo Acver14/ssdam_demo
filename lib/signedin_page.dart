@@ -377,16 +377,25 @@ class SignedInPageState extends State<SignedInPage> {
                 _reservation_time),
             onPressed: () {
               print('pressed time button');
+              DateTime initial_date = DateTime.now();
+              switch (initial_date.weekday) {
+                case 7:
+                  initial_date.add(Duration(days: 1));
+                  break;
+                case 6:
+                  initial_date.add(Duration(days: 2));
+                  break;
+                default:
+                  break;
+              }
               showDatePicker(
                 context: context,
-                initialDate: reservationInfo.getReservationTime() == null
-                    ? _reservation_time
-                    : reservationInfo.getReservationTime(),
-                firstDate: _reservation_time,
-                lastDate: _reservation_time.add(Duration(days: 30)),
+                initialDate: _reservation_time,
+                firstDate: initial_date,
+                lastDate: initial_date.add(Duration(days: 30)),
                 selectableDayPredicate: (DateTime val) =>
-                val.weekday == 7 || val.weekday == 6 ? false : true,)
-                  .then((date) {
+                    val.weekday == 7 || val.weekday == 6 ? false : true,
+              ).then((date) {
                 setState(() {
                   if (date != null) {
                     _reservation_time = DateTime(
@@ -495,11 +504,13 @@ class SignedInPageState extends State<SignedInPage> {
                       style: TextStyle(color: Colors.white, fontSize: 20),
                     ),
                     onPressed: () {
-                      reservationInfo
-                          .setCustomerRequests(customerRequestCont.text.trim());
+                      setState(() {
+                        reservationInfo.setCustomerRequests(
+                            customerRequestCont.text.trim());
+                        setRememberRequests(
+                            reservationInfo.getCustomerRequests());
+                      });
                       Navigator.of(context).pop();
-                      setRememberRequests(
-                          reservationInfo.getCustomerRequests());
                     },
                   ),
                   willDisplayWidget: Column(
