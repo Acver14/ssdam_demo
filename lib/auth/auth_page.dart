@@ -4,9 +4,10 @@ import 'package:ssdam_demo/intro_page.dart';
 import 'package:ssdam_demo/signedin_page.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 AuthPageState pageState;
-
 
 class AuthPage extends StatefulWidget {
   @override
@@ -18,6 +19,19 @@ class AuthPage extends StatefulWidget {
 
 class AuthPageState extends State<AuthPage> {
   FirebaseProvider fp;
+  var _flutter_local_notifications_plugin;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    // var androidSetting = AndroidInitializationSettings('@mipmap/ic_launcher');
+    // var iosSetting = IOSInitializationSettings();
+    // var initializationSettings = InitializationSettings(androidSetting, iosSetting);
+    //
+    // _flutter_local_notifications_plugin = FlutterLocalNotificationsPlugin();
+    // _flutter_local_notifications_plugin.initialize(initializationSettings, onSelectNotification: onSelectNotification);
+  }
 
   @override
   Widget build(BuildContext context) {

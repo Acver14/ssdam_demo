@@ -27,7 +27,9 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 SignedInPageState pageState;
 
 final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
-var _flutterLocalNotificationsPlugin;
+
+FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
 
 final List<String> eventList = ['assets/event/event_0.png'];
 
@@ -87,9 +89,30 @@ class SignedInPageState extends State<SignedInPage> {
     firebaseCloudMessaging_Listeners();
     getRememberAddr();
     getRememberRequests();
+    getRememberRequests();
     setReservationTime();
     log.d(reservationInfo.getReservationTime());
     log.d(reservationInfo.getAddress());
+
+    // for local_noti
+    var androidSetting = AndroidInitializationSettings('@mipmap/ic_launcher');
+    var iosSetting = IOSInitializationSettings();
+    var initializationSettings =
+    InitializationSettings(androidSetting, iosSetting);
+
+    _flutterLocalNotificationsPlugin.initialize(initializationSettings,
+        onSelectNotification: onSelectNotification);
+  }
+
+  Future onSelectNotification(String payload) async {
+    log.d('noti??');
+    showDialog(
+        context: context,
+        builder: (_) =>
+            AlertDialog(
+              title: Text(''),
+              content: Text('Payload: $payload'),
+            ));
   }
 
   setReservationTime() {
@@ -100,7 +123,15 @@ class SignedInPageState extends State<SignedInPage> {
       _reservation_time = tmpTime.add(Duration(hours: 1));
     } else if (tmpTime.hour >= 12 && tmpTime.hour <= 17) {
       _reservation_time =
-          DateTime(tmpTime.year, tmpTime.month, tmpTime.day, 18, 0, 0, 0, 0);
+          DateTime(
+              tmpTime.year,
+              tmpTime.month,
+              tmpTime.day,
+              18,
+              0,
+              0,
+              0,
+              0);
     } else {
       tmpTime = tmpTime.add(Duration(days: 1));
       _reservation_time =
@@ -158,13 +189,13 @@ class SignedInPageState extends State<SignedInPage> {
     await setDeviceToken();
     _user_info = fp.getUserInfo();
     reservationInfo.setInitialInfo(
+        _user_info['name'],
         fp
             .getUser()
-            .displayName, fp
-        .getUser()
-        .uid, fp
-        .getUser()
-        .email);
+            .uid,
+        fp
+            .getUser()
+            .email);
     if (_user_info != null) {
       return _user_info;
     }
@@ -380,10 +411,10 @@ class SignedInPageState extends State<SignedInPage> {
                           log.d(DateTime
                               .now()
                               .hour);
-                          if (time.hour > DateTime
-                              .now()
-                              .hour) {
-                            DateTime tmp = _reservation_time;
+                          DateTime tmp = _reservation_time;
+                          if (DateTime(tmp.year,
+                              tmp.month, tmp.day, time.hour,
+                              time.minute).compareTo(DateTime.now()) > 0) {
                             reservationInfo.setReservationTime(
                                 DateTime(tmp.year,
                                     tmp.month, tmp.day, time.hour,
@@ -537,12 +568,30 @@ class SignedInPageState extends State<SignedInPage> {
                           .getUser()
                           .uid)
                           .updateData({"tickets": _tickets});
+                      _showNotificationAtTime((reservationInfo
+                          .getApplicationTime()
+                          .millisecondsSinceEpoch
+                          - DateTime(
+                              DateTime
+                                  .now()
+                                  .year,
+                              DateTime
+                                  .now()
+                                  .month,
+                              1,
+                              0,
+                              0,
+                              0,
+                              0).millisecondsSinceEpoch),
+                          Duration(minutes: 30));
                       Navigator.pop(context);
                       print('예약 완료');
                       return PopupBox.showPopupBox(
                         context: context,
                         button: MaterialButton(
-                          onPressed: () => Navigator.pop(context),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
                         ),
                         willDisplayWidget: Center(
                             child: Text(
@@ -583,6 +632,9 @@ class SignedInPageState extends State<SignedInPage> {
                   'Ok',
                   style: TextStyle(color: Colors.white, fontSize: 20),
                 ),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
               ),
               willDisplayWidget: Center(
                   child: Text(
@@ -603,6 +655,9 @@ class SignedInPageState extends State<SignedInPage> {
                 'Ok',
                 style: TextStyle(color: Colors.white, fontSize: 20),
               ),
+              onPressed: () {
+                Navigator.pop(context);
+              },
             ),
             willDisplayWidget: Center(
                 child: Text(
@@ -631,9 +686,9 @@ class SignedInPageState extends State<SignedInPage> {
             ),
             color: Colors.blue,
             onPressed: () {
-              setState(() {
-                _icon_button = "close_trash.png";
-              });
+              {
+                Navigator.pop(context);
+              }
             },
           ),
           willDisplayWidget: new Center(
@@ -658,6 +713,86 @@ class SignedInPageState extends State<SignedInPage> {
                     onPressed: () {},
                   )),
             ),
-          ))
+  ))
       .toList();
+
+
+  Future _showNotificationAtTime(int id, Duration alert_term) async {
+    var scheduledNotificationDateTime =
+    new DateTime.now().add(new Duration(seconds: 10));
+
+    //reservationInfo.getReservationTime().subtract(alert_term);      알람까지 지연시간
+
+    var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+        'your channel id', 'default', 'your channel description',
+        //sound: 'slow_spring_board.aiff',
+        importance: Importance.Max,
+        priority: Priority.High
+    );
+
+    var iosPlatformChannelSpecifics = IOSNotificationDetails(
+        sound: 'slow_spring.board.aiff');
+    var platformChannelSpecifics = NotificationDetails(
+        androidPlatformChannelSpecifics, iosPlatformChannelSpecifics);
+
+    await _flutterLocalNotificationsPlugin.schedule(
+      id,
+      '쓰담 고객님,',
+      '${alert_term.inMinutes}분 후 도착 예정입니다!',
+      scheduledNotificationDateTime,
+      platformChannelSpecifics,
+      payload: 'Hello Flutter',
+    );
+    log.d('노티 등록 완료');
+  }
+
+  Future _showNotificationRepeat() async {
+    var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+        'your channel id', 'your channel name', 'your channel description',
+        //sound: 'slow_spring_board',
+        importance: Importance.Max,
+        priority: Priority.High
+    );
+
+    var iosPlatformChannelSpecifics = IOSNotificationDetails(
+        sound: 'slow_spring.board.aiff');
+    var platformChannelSpecifics = NotificationDetails(
+        androidPlatformChannelSpecifics, iosPlatformChannelSpecifics);
+
+    await _flutterLocalNotificationsPlugin.periodicallyShow(
+      1,
+      '반복 Notification',
+      '반복 Notification 내용',
+      RepeatInterval.EveryMinute,
+      platformChannelSpecifics,
+      payload: 'Hello Flutter',
+    );
+  }
+
+  Future _showNotificationWithSound() async {
+    var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+        'your channel id', 'your channel name', 'your channel description',
+        //sound: 'slow_spring_board',
+        importance: Importance.Max,
+        priority: Priority.High
+    );
+
+    var iosPlatformChannelSpecifics = IOSNotificationDetails(
+        sound: 'slow_spring.board.aiff');
+    var platformChannelSpecifics = NotificationDetails(
+        androidPlatformChannelSpecifics, iosPlatformChannelSpecifics);
+
+    await _flutterLocalNotificationsPlugin.show(
+      0,
+      '심플 Notification',
+      '이것은 Flutter 노티피케이션!',
+      platformChannelSpecifics,
+      payload: 'Hello Flutter',
+    );
+  }
+}
+
+Future cancelNotification(int id) async {
+  await _flutterLocalNotificationsPlugin.cancel(id);
+  print('노티 취소 완료');
 }

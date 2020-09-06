@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:logger/logger.dart';
 import 'package:ssdam_demo/firebase_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:ssdam_demo/customWidget/side_drawer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ssdam_demo/customWidget/loading_widget.dart';
 import 'package:popup_box/popup_box.dart';
+import 'package:ssdam_demo/signedin_page.dart';
 import 'package:ssdam_demo/style/customColor.dart';
+import 'package:logger/logger.dart';
 import 'package:ssdam_demo/customClass/size_constant.dart';
 
 ReservationListPageState pageState;
@@ -127,45 +130,107 @@ class ReservationListPageState extends State<ReservationListPage> {
                 new IconButton(
                 icon: new Icon(Icons.delete),
                 onPressed: () async {
-                  if ((doc["reservationTime"] - Timestamp.now()).hour > 3) {
-                    PopupBox.showPopupBox(
-                        context: context,
-                        button: MaterialButton(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          color: Colors.blue,
-                          child: Text(
-                            'Ok',
-                            style: TextStyle(fontSize: 20),
-                          ),
-                          onPressed: () async {
-                            await Firestore.instance
-                                .collection('reservationList')
-                                .document(fp
-                                .getUser()
-                                .uid)
-                                .collection('reservationInfo')
-                                .document(reservationID)
-                                .delete();
-                            setState(() {
-                              Loading();
-                            });
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                        willDisplayWidget: Column(
-                          children: <Widget>[
-                            Text(
-                              '예약을 취소합니다.',
-                              style:
-                                  TextStyle(fontSize: 16, color: Colors.black),
+                  //print(Timestamp.now().toDate().difference((doc["reservationTime"]).toDate()).inHours);
+                  PopupBox.showPopupBox(
+                      context: context,
+                      button: Row(
+                        children: [
+                          MaterialButton(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
                             ),
-                          ],
-                        ));
-                  }
-
-                  print('예약 삭제 성공');
+                            color: COLOR_SSDAM,
+                            child: Text(
+                              '취소',
+                              style: TextStyle(
+                                  color: Colors.white, fontSize: 20),
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                          ),
+                          SizedBox(width: 10),
+                          MaterialButton(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            color: Colors.blue,
+                            child: Text(
+                              'Ok',
+                              style: TextStyle(fontSize: 20),
+                            ),
+                            onPressed: () async {
+                              await Firestore.instance
+                                  .collection('reservationList')
+                                  .document(fp
+                                  .getUser()
+                                  .uid)
+                                  .collection('reservationInfo')
+                                  .document(reservationID)
+                                  .delete();
+                              if ((doc["reservationTime"])
+                                  .toDate()
+                                  .difference(Timestamp.now().toDate())
+                                  .inHours > 3) {
+                                await Firestore.instance
+                                    .collection('userInfo')
+                                    .document(fp
+                                    .getUser()
+                                    .uid)
+                                    .updateData({
+                                  "tickets": fp.getUserInfo()['tickets'] + 1
+                                });
+                                setState(() {});
+                              }
+                              print('예약 삭제 성공');
+                              setState(() {
+                                Loading();
+                                cancelNotification(doc['applicationTime']
+                                    .millisecondsSinceEpoch
+                                    - DateTime(
+                                        DateTime
+                                            .now()
+                                            .year,
+                                        DateTime
+                                            .now()
+                                            .month,
+                                        1,
+                                        0,
+                                        0,
+                                        0,
+                                        0).millisecondsSinceEpoch);
+                              });
+                              Navigator.of(context).pop();
+                              return await PopupBox.showPopupBox(
+                                context: context,
+                                button: MaterialButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                                willDisplayWidget: Center(
+                                    child: Text(
+                                      '${fp.getUserInfo()['name']}님\n'
+                                          '${doc["reservationTime"].toDate()}\n'
+                                      //'${reservationInfo.getAddress()} ${reservationInfo.getDetailedAddress()}\n'
+                                          '예약 취소 완료되었습니다.',
+                                      style: TextStyle(
+                                          fontSize: 16, color: Colors.black),
+                                    )),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                      willDisplayWidget: Center(
+                          child: Text(
+                            '${fp.getUserInfo()['name']}님\n'
+                                '${doc["reservationTime"].toDate()}\n'
+                                '예약 취소하시겠습니까?\n'
+                                '(당일 예약 취소는 이용권 반환이 불가합니다.)',
+                            style: TextStyle(fontSize: 16, color: Colors.black),
+                          )),
+                    );
                 })
           ],
             ),

@@ -4,11 +4,18 @@ import 'package:ssdam_demo/firebase_provider.dart';
 import 'package:ssdam_demo/auth/auth_page.dart';
 import 'package:ssdam_demo/customClass/reservatioin_info_class.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
+  var initAndroidSetting = AndroidInitializationSettings('@mipmap/ic_launcher');
+  var initIosSetting = IOSInitializationSettings();
+  var initSetting = InitializationSettings(initAndroidSetting, initIosSetting);
+  await FlutterLocalNotificationsPlugin().initialize(initSetting);
 
-
-void main() => runApp(MyApp());
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
