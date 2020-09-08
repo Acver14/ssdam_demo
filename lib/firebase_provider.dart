@@ -158,7 +158,6 @@ class FirebaseProvider with ChangeNotifier {
       final graphResponse = await http.get(
           'https://graph.facebook.com/me?fields=name,email&access_token=${result.accessToken.token}');
       final profile = jsonDecode(graphResponse.body);
-      profile['email'] = null;
       if (profile['email'] == null) {
         Navigator.push(
           context,

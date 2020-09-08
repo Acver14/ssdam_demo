@@ -45,7 +45,6 @@ class SignedInPageState extends State<SignedInPage> {
   FirebaseProvider fp;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _getTrash = false;
-  int _tickets;
   DateTime _reservation_time;
   var _icon_button = "close_trash.png";
   TextEditingController detailAddressCont = TextEditingController();
@@ -249,7 +248,6 @@ class SignedInPageState extends State<SignedInPage> {
                         log.d(snapshot.data);
                         if (snapshot.hasData && !snapshot.data.isEmpty) {
                           _getTrash = snapshot.data['getTrash?'];
-                          _tickets = snapshot.data['tickets'];
                           return widgetContainerForReservation();
                         } else if (snapshot.hasError) {
                           return Padding(
@@ -267,7 +265,8 @@ class SignedInPageState extends State<SignedInPage> {
                     height: grid_height / 6,
                   ),
                   MaterialButton(
-                    onPressed: reservationBtn,
+                    onPressed: () =>
+                        reservationBtn(fp.getUserInfo()['tickets']),
                     color: COLOR_SSDAM,
                     textColor: Colors.white,
                     minWidth: grid_height * 3.7,
@@ -529,15 +528,13 @@ class SignedInPageState extends State<SignedInPage> {
     ));
   }
 
-  Future<Widget> reservationBtn() async {
+  Future<Widget> reservationBtn(int _tickets) async {
     reservationInfo.setCustomerRequests(customerRequestCont.text.trim());
     setRememberRequests(reservationInfo.getCustomerRequests());
     reservationInfo.setApplicationTime(DateTime.now());
     if (fp.getUserInfo()["getTrash?"]) {
       if (_tickets > 0) {
-        if (reservationInfo
-            .getAddress()
-            .length > 0) {
+        if (reservationInfo.getAddress().length > 0) {
           return PopupBox.showPopupBox(
             context: context,
             button: Expanded(

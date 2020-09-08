@@ -146,16 +146,13 @@ class MyPageState extends State<MyPage> {
   Widget serviceState(){
     var service;
 
-    if(fp.getUserInfo()['service'] == null){
+    if (fp.getUserInfo()['service'] == null ||
+        fp.getUserInfo()['service'] == '') {
       return Card(
           child: ListTile(
-            title: Text(
-                '이용 중인 서비스가 없습니다.'
-            ),
-          )
-      );
-    }
-    else{
+        title: Text('이용 중인 서비스가 없습니다.'),
+      ));
+    } else {
       switch (fp.getUserInfo()['service']) {
         case 'periodic20000':
           service = "정기권 20000원";

@@ -10,8 +10,8 @@ TextStyle drawerMenuButtonStyle = TextStyle(
   color: Colors.black,
 );
 
-TextStyle pointChargeTitleStyle = TextStyle(
-  fontSize: 20,
-  color: Colors.black,
-  fontWeight: FontWeight.bold
-);
+TextStyle pointChargeTitleStyle =
+    TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold);
+
+TextStyle footerStyle =
+    TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w300);

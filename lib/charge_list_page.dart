@@ -69,23 +69,18 @@ class ChargeListPageState extends State<ChargeListPage> {
         toolbarOpacity: 1.0,
       ),
       drawer: sideDrawer(context, fp),
-      body: GridView.count(
-          crossAxisCount: 1,
-          padding: EdgeInsets.all(16.0),
-          childAspectRatio: 5.0 / 10.0,
-          children: <Widget>[
-            FutureBuilder(
-                future: Loading(),
-                builder: (BuildContext context,
-                    AsyncSnapshot<QuerySnapshot> snapshot) {
-                  if (!snapshot.hasData) {
-                    return widgetLoading();
-                  } else {
-                    if (snapshot.data.documents.length > 0) {
-                      getChargeList(snapshot);
-                      print('length:${snapshot.data.documents.length}');
-                      return Expanded(
-                          child: new ListView.builder(
+      body: FutureBuilder(
+          future: Loading(),
+          builder:
+              (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+            if (!snapshot.hasData) {
+              return widgetLoading();
+            } else {
+              if (snapshot.data.documents.length > 0) {
+                getChargeList(snapshot);
+                print('length:${snapshot.data.documents.length}');
+                return Expanded(
+                    child: new ListView.builder(
                             //reverse: true,
                             scrollDirection: Axis.vertical,
                             controller: _infiniteController,
@@ -101,7 +96,6 @@ class ChargeListPageState extends State<ChargeListPage> {
                     }
                   }
                 }),
-          ]),
     );
   }
 

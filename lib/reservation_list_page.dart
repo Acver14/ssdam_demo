@@ -56,6 +56,7 @@ class ReservationListPageState extends State<ReservationListPage> {
   }
 
   Future<QuerySnapshot> Loading() async {
+    await fp.setUserInfo();
     return reservation_infos = await Firestore.instance
         .collection('reservationList')
         .document(fp.getUser().uid)
@@ -77,36 +78,34 @@ class ReservationListPageState extends State<ReservationListPage> {
         toolbarOpacity: 1.0,
       ),
       drawer: sideDrawer(context, fp),
-      body: GridView.count(
-          crossAxisCount: 1,
-          padding: EdgeInsets.all(16.0),
-          childAspectRatio: 5.0 / 10.0,
-          children: <Widget>[
-            FutureBuilder(
-                future: Loading(),
-                builder: (BuildContext context,
-                    AsyncSnapshot<QuerySnapshot> snapshot) {
-                  if (!snapshot.hasData) {
-                    return widgetLoading();
-                  } else {
-                    if (snapshot.data.documents.length > 0) {
-                      getReservationList(snapshot);
-                      print('length:${snapshot.data.documents.length}');
-                      return new ListView.builder(
-                        scrollDirection: Axis.vertical,
-                        controller: _infiniteController,
-                        itemCount: snapshot.data.documents.length,
-                        itemBuilder: (context, index) {
-                          return getReservationInfo(
-                              index, snapshot.data.documents.length);
-                        },
-                      );
+      body: FutureBuilder(
+          future: Loading(),
+          builder: (BuildContext context,
+              AsyncSnapshot<QuerySnapshot> snapshot) {
+            if (!snapshot.hasData) {
+              return widgetLoading();
+            } else {
+              if (snapshot.data.documents.length > 0) {
+                getReservationList(snapshot);
+                print('length:${snapshot.data.documents.length}');
+                return new Scrollbar(
+                    isAlwaysShown: true,
+                    controller: _infiniteController,
+                    child: ListView.builder(
+                      scrollDirection: Axis.vertical,
+                      controller: _infiniteController,
+                      itemCount: snapshot.data.documents.length,
+                      itemBuilder: (context, index) {
+                        return getReservationInfo(
+                            index, snapshot.data.documents.length);
+                      },
+                    )
+                );
                     } else {
                       return new Center(child: Text("예약건이 없습니다."));
                     }
                   }
                 }),
-          ]),
     );
   }
 
@@ -119,25 +118,34 @@ class ReservationListPageState extends State<ReservationListPage> {
       if (doc["type"].toString() == 'deliver') {
         type = "쓰레기통 배송";
       } else {
-        type = "쓰레기통 수거";
+        type = "쓰레기 수거";
+      }
+      if (doc["state"].toString() == 'register') {
+        state = '접수';
+      }
+      else if (doc["state"].toString() == 'cancel') {
+        state = '취소';
+      }
+      else if (doc["state"].toString() == 'complete') {
+        state = '완료';
       }
       return new Card(
           child: ListTile(
             title: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                new Text(doc["name"]),
-                new IconButton(
-                icon: new Icon(Icons.delete),
-                onPressed: () async {
-                  //print(Timestamp.now().toDate().difference((doc["reservationTime"]).toDate()).inHours);
-                  PopupBox.showPopupBox(
-                      context: context,
-                      button: Row(
-                        children: [
-                          MaterialButton(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
+                new Text(type),
+                doc['state'] != 'cancel' ? new IconButton(
+                    icon: new Icon(Icons.delete),
+                    onPressed: () async {
+                      //print(Timestamp.now().toDate().difference((doc["reservationTime"]).toDate()).inHours);
+                      PopupBox.showPopupBox(
+                        context: context,
+                        button: Row(
+                          children: [
+                            MaterialButton(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
                             ),
                             color: COLOR_SSDAM,
                             child: Text(
@@ -154,10 +162,11 @@ class ReservationListPageState extends State<ReservationListPage> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            color: Colors.blue,
+                            color: COLOR_SSDAM,
                             child: Text(
-                              'Ok',
-                              style: TextStyle(fontSize: 20),
+                              '확인',
+                              style: TextStyle(
+                                  color: Colors.white, fontSize: 20),
                             ),
                             onPressed: () async {
                               await Firestore.instance
@@ -167,7 +176,7 @@ class ReservationListPageState extends State<ReservationListPage> {
                                   .uid)
                                   .collection('reservationInfo')
                                   .document(reservationID)
-                                  .delete();
+                                  .setData({'state': 'cancel'}, merge: true);
                               if ((doc["reservationTime"])
                                   .toDate()
                                   .difference(Timestamp.now().toDate())
@@ -221,17 +230,20 @@ class ReservationListPageState extends State<ReservationListPage> {
                             },
                           ),
                         ],
-                      ),
-                      willDisplayWidget: Center(
-                          child: Text(
-                            '${fp.getUserInfo()['name']}님\n'
-                                '${doc["reservationTime"].toDate()}\n'
-                                '예약 취소하시겠습니까?\n'
-                                '(당일 예약 취소는 이용권 반환이 불가합니다.)',
-                            style: TextStyle(fontSize: 16, color: Colors.black),
-                          )),
-                    );
-                })
+                        ),
+                        willDisplayWidget: Center(
+                            child: Text(
+                              '${fp.getUserInfo()['name']}님\n'
+                                  '${doc["reservationTime"].toDate()}\n'
+                                  '예약 취소하시겠습니까?\n'
+                                  '(당일 예약 취소는 이용권 반환이 불가합니다.)',
+                              style: TextStyle(
+                                  fontSize: 16, color: Colors.black),
+                            )),
+                      );
+                    }) : new IconButton(icon: new Icon(Icons.delete),
+                  onPressed: () {},
+                  color: Colors.white.withOpacity(1.0),)
           ],
             ),
             subtitle: Column(
@@ -246,8 +258,16 @@ class ReservationListPageState extends State<ReservationListPage> {
                 new Text(
                     '요청 사항 : ${doc["customerRequest"].toString() != null
                         ? doc["customerRequest"].toString()
-                        : ' '}'),
-                new Text('예약 형식 : ${type}'),
+                        : '요청 사항이 없습니다.'}'),
+                new Row(
+                  children: [
+                    Text('에약 상태 : '
+                    ),
+                    Text('${state}',
+                      style: TextStyle(
+                          color: state == '취소' ? Colors.red : Colors.black),)
+                  ],
+                )
               ],
             ),
           ));
