@@ -200,13 +200,20 @@ class MyPageState extends State<MyPage> {
     print(toDate);
     List<DocumentSnapshot> reservation_info = reservation_infos.documents;
     reservation_info.forEach((element) {
-      DateTime temp = Timestamp.fromMillisecondsSinceEpoch(int.parse(element.documentID.split('=')[1].split(',')[0])*1000).toDate();
+      DateTime temp;
+      if (element.data['state'] == 'complete' ||
+          element.data['state'] == 'register') {
+        temp = Timestamp.fromMillisecondsSinceEpoch(
+                int.parse(element.documentID.split('=')[1].split(',')[0]) *
+                    1000)
+            .toDate();
+      }
       //DateTime temp = DateTime.fromMicrosecondsSinceEpoch(element.data['reservationTime']);
       print(temp);
       print(int.parse(element.documentID.split('=')[1].split(',')[0]));
       print(DateTime.now().difference(temp).inDays);
-      if(DateTime.now().difference(temp).inDays < 151){
-        switch((DateTime.now().difference(temp).inDays ~/ 30)){
+      if (DateTime.now().difference(temp).inDays < 151) {
+        switch ((DateTime.now().difference(temp).inDays ~/ 30)) {
           case 5:
             value6 += 1.0;
             break;

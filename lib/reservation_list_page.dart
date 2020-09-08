@@ -234,12 +234,11 @@ class ReservationListPageState extends State<ReservationListPage> {
                         willDisplayWidget: Center(
                             child: Text(
                               '${fp.getUserInfo()['name']}님\n'
-                                  '${doc["reservationTime"].toDate()}\n'
-                                  '예약 취소하시겠습니까?\n'
-                                  '(당일 예약 취소는 이용권 반환이 불가합니다.)',
-                              style: TextStyle(
-                                  fontSize: 16, color: Colors.black),
-                            )),
+                          '${doc["reservationTime"].toDate()}\n'
+                          '예약 취소하시겠습니까?\n'
+                          '(3시간 전 예약 취소는 이용권 반환이 불가합니다.)',
+                          style: TextStyle(fontSize: 16, color: Colors.black),
+                        )),
                       );
                     }) : new IconButton(icon: new Icon(Icons.delete),
                   onPressed: () {},

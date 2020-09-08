@@ -88,7 +88,6 @@ class SignedInPageState extends State<SignedInPage> {
     firebaseCloudMessaging_Listeners();
     getRememberAddr();
     getRememberRequests();
-    getRememberRequests();
     setReservationTime();
     log.d(reservationInfo.getReservationTime());
     log.d(reservationInfo.getAddress());
