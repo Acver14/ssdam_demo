@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'firebase_provider.dart';
@@ -167,8 +166,7 @@ class MyPageState extends State<MyPage> {
       return Card(
           child: ListTile(
             title: Text(
-              '이용 중인 서비스 : ${service}'
-            ),
+              '이용 중인 서비스 : $service'),
             subtitle: Text(
               '결제일 : ${fp.getUserInfo()['publish_date']}일'
             ),
