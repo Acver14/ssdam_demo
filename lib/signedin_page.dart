@@ -187,13 +187,8 @@ class SignedInPageState extends State<SignedInPage> {
     await setDeviceToken();
     _user_info = fp.getUserInfo();
     reservationInfo.setInitialInfo(
-        _user_info['name'],
-        fp
-            .getUser()
-            .uid,
-        fp
-            .getUser()
-            .email);
+        _user_info['name'], fp.getUser().uid, fp.getUser().email);
+    print(fp.getUser().toString());
     if (_user_info != null) {
       return _user_info;
     }
@@ -265,7 +260,7 @@ class SignedInPageState extends State<SignedInPage> {
                   ),
                   MaterialButton(
                     onPressed: () =>
-                        reservationBtn(fp.getUserInfo()['tickets']),
+                        reservationBtn(),
                     color: COLOR_SSDAM,
                     textColor: Colors.white,
                     minWidth: grid_height * 3.7,
@@ -527,37 +522,38 @@ class SignedInPageState extends State<SignedInPage> {
     ));
   }
 
-  Future<Widget> reservationBtn(int _tickets) async {
+  Future<Widget> reservationBtn() async {
     reservationInfo.setCustomerRequests(customerRequestCont.text.trim());
     setRememberRequests(reservationInfo.getCustomerRequests());
     reservationInfo.setApplicationTime(DateTime.now());
     if (fp.getUserInfo()["getTrash?"]) {
-      if (_tickets > 0) {
-        if (reservationInfo.getAddress().length > 0) {
+      if (fp.getUserInfo()['tickets'] > 0) {
+        if (reservationInfo
+            .getAddress()
+            .length > 0) {
           return PopupBox.showPopupBox(
             context: context,
-            button: Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  MaterialButton(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    color: COLOR_SSDAM,
-                    child: Text(
-                      '취소',
-                      style: TextStyle(color: Colors.white, fontSize: 20),
-                    ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
+            button: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                MaterialButton(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  SizedBox(width: 10),
-                  MaterialButton(
-                    //minWidth: grid_width * 5,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                  color: COLOR_SSDAM,
+                  child: Text(
+                    '취소',
+                    style: TextStyle(color: Colors.white, fontSize: 20),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+                SizedBox(width: 10),
+                MaterialButton(
+                  //minWidth: grid_width * 5,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
                     ),
                     color: COLOR_SSDAM,
                     child: Text(
@@ -566,15 +562,19 @@ class SignedInPageState extends State<SignedInPage> {
                     ),
                     onPressed: () async {
                       await reservationInfo.saveReservationInfo("collect");
-                      setState(() {
-                        _tickets -= 1;
-                      });
+                      // setState(() {
+                      //   _tickets -= 1;
+                      // });
                       Firestore.instance
                           .collection('userInfo')
                           .document(fp
                           .getUser()
                           .uid)
-                          .updateData({"tickets": _tickets});
+                          .updateData(
+                          {"tickets": fp.getUserInfo()['tickets'] - 1});
+                      setState(() async {
+                        await Loading();
+                      });
                       _showNotificationAtTime((reservationInfo
                           .getApplicationTime()
                           .millisecondsSinceEpoch
@@ -614,7 +614,6 @@ class SignedInPageState extends State<SignedInPage> {
                   ),
                 ],
               ),
-            ),
             willDisplayWidget: Center(
                 child: Text(
                   '${fp.getUserInfo()['name']}님\n'

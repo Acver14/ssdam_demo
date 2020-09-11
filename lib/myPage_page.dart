@@ -205,33 +205,33 @@ class MyPageState extends State<MyPage> {
                 int.parse(element.documentID.split('=')[1].split(',')[0]) *
                     1000)
             .toDate();
-      }
-      //DateTime temp = DateTime.fromMicrosecondsSinceEpoch(element.data['reservationTime']);
-      print(temp);
-      print(int.parse(element.documentID.split('=')[1].split(',')[0]));
-      print(DateTime.now().difference(temp).inDays);
-      if (DateTime.now().difference(temp).inDays < 151) {
-        switch ((DateTime.now().difference(temp).inDays ~/ 30)) {
-          case 5:
-            value6 += 1.0;
-            break;
-          case 4:
-            value5 += 1.0;
-            break;
-          case 3:
-            value4 += 1.0;
-            break;
-          case 2:
-            value3 += 1.0;
-            break;
-          case 1:
-            value2 += 1.0;
-            break;
-          case 0:
-            value1 += 1.0;
-            break;
+        print('temp : $temp');
+        print(int.parse(element.documentID.split('=')[1].split(',')[0]));
+        print('in days: ${DateTime.now().difference(temp).inDays}');
+        if (DateTime.now().difference(temp).inDays < 151) {
+          switch ((DateTime.now().difference(temp).inDays ~/ 30)) {
+            case 5:
+              value6 += 1.0;
+              break;
+            case 4:
+              value5 += 1.0;
+              break;
+            case 3:
+              value4 += 1.0;
+              break;
+            case 2:
+              value3 += 1.0;
+              break;
+            case 1:
+              value2 += 1.0;
+              break;
+            case 0:
+              value1 += 1.0;
+              break;
+          }
         }
       }
+      //DateTime temp = DateTime.fromMicrosecondsSinceEpoch(element.data['reservationTime']);
     });
 
     print("1: ${value1}, 2: ${value2}, 3 : ${value3}, 4 : ${value4}, 5 : ${value5}, 6 : ${value6}");

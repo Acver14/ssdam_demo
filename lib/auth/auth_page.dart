@@ -38,7 +38,10 @@ class AuthPageState extends State<AuthPage> {
     fp = Provider.of<FirebaseProvider>(context);
     //logger.d("user: ${fp.getUser()}");
     //logger.d("user: ${fp.getUser().email}");
+    print(fp.getUser());
+    print(fp.getUser() != null);
     if (fp.getUser() != null && fp.getUser().isEmailVerified == true) {
+      print('why....!!!!!!!!!!');
       return SignedInPage();
     } else {
       return IntroPage();

@@ -79,19 +79,22 @@ class ChargeListPageState extends State<ChargeListPage> {
               if (snapshot.data.documents.length > 0) {
                 getChargeList(snapshot);
                 print('length:${snapshot.data.documents.length}');
-                return Expanded(
-                    child: new ListView.builder(
-                            //reverse: true,
-                            scrollDirection: Axis.vertical,
-                            controller: _infiniteController,
-                            itemCount: snapshot.data.documents.length,
-                            itemBuilder: (context, index) {
-                              return getChargeInfo(index, snapshot.data
-                                  .documents.length);
-                            },
-                          )
-                      );
-                    } else {
+                return Column(
+                  children: [
+                    Expanded(
+                        child: new ListView.builder(
+                      //reverse: true,
+                      scrollDirection: Axis.vertical,
+                      controller: _infiniteController,
+                      itemCount: snapshot.data.documents.length,
+                      itemBuilder: (context, index) {
+                        return getChargeInfo(
+                            index, snapshot.data.documents.length);
+                      },
+                    ))
+                  ],
+                );
+              } else {
                       return new Center(child: Text("결제건이 없습니다."));
                     }
                   }

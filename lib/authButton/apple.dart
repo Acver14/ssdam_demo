@@ -85,7 +85,7 @@ class AppleSignInButton extends StatelessWidget {
                           fontSize: 18.0,
                           fontFamily: "Roboto",
                           fontWeight: FontWeight.w500,
-                          color: Colors.black.withOpacity(0.54),
+                          color: Colors.white,
                         ),
                   ),
                 ),

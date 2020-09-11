@@ -31,8 +31,8 @@ dependencies:
 
   #bootpay_api: ^1.1.12
   iamport_flutter: ^0.9.11
-
-  url_launcher:
+  webview_flutter: ^0.3.22+1
+  url_launcher: ^5.4.2
 
   provider: ^3.1.0+1
   shared_preferences: ^0.5.3+4
@@ -85,6 +85,7 @@ dependencies:
 
   carousel_slider: ^2.2.1
   intro_views_flutter: ^2.8.1
+  intro_slider: ^2.3.2
   bezier_chart: ^1.0.16
 
 dev_dependencies:
@@ -109,6 +110,7 @@ flutter:
     - assets/button/
     - assets/event/
     - assets/icon/
+    - assets/intro_view/
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
 

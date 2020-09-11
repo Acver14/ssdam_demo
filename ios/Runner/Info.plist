@@ -57,6 +57,8 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
 	<key>io.flutter.embedded_views_preview</key>
+    <string>YES</string>
+	<key>io.flutter.embedded_views_preview</key>
     	<true/>
     	<key>NSPhotoLibraryUsageDescription</key>
     	<string></string>

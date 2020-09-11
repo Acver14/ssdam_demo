@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ssdam_demo/customWidget/side_drawer.dart';
 import 'package:ssdam_demo/firebase_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:ssdam_demo/style/customColor.dart';
 import 'firebase_provider.dart';
-import 'package:ssdam_demo/customWidget/point_charge_button.dart';
-import 'package:ssdam_demo/style/textStyle.dart';
-//import 'package:ssdam/payment_management/bootpay_payapp.dart';
 import 'package:ssdam_demo/payment_management/iamport_inicis_periodic.dart';
 import 'package:ssdam_demo/payment_management/iamport_inicis_shortTerm.dart';
 

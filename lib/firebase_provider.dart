@@ -30,6 +30,7 @@ class FirebaseProvider with ChangeNotifier {
 
   FirebaseProvider() {
     logger.d("init FirebaseProvider");
+    print('init FirebaseProvider');
     _prepareUser();
     _firebaseMessaging.getToken().then((_token) {
       token = _token;
@@ -238,12 +239,13 @@ class FirebaseProvider with ChangeNotifier {
   // }
 
   Future<void> setUserInfo() async {
+    print('uid : ${_user.uid}');
     await Firestore.instance
         .collection('userInfo')
         .document(_user.uid)
         .get()
         .then((value) {
-      print(value);
+      print('value: ${value.data.toString()}');
       _user_info = value.data;
     });
   }
