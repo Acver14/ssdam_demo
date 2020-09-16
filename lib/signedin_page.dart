@@ -750,8 +750,7 @@ class SignedInPageState extends State<SignedInPage> {
 
 
   Future _showNotificationAtTime(int id, Duration alert_term) async {
-    var scheduledNotificationDateTime =
-    new DateTime.now().add(new Duration(seconds: 10));
+    var scheduledNotificationDateTime = new DateTime.now().add(alert_term);
 
     //reservationInfo.getReservationTime().subtract(alert_term);      알람까지 지연시간
 
@@ -759,11 +758,10 @@ class SignedInPageState extends State<SignedInPage> {
         'your channel id', 'default', 'your channel description',
         //sound: 'slow_spring_board.aiff',
         importance: Importance.Max,
-        priority: Priority.High
-    );
+        priority: Priority.High);
 
-    var iosPlatformChannelSpecifics = IOSNotificationDetails(
-        sound: 'slow_spring.board.aiff');
+    var iosPlatformChannelSpecifics =
+        IOSNotificationDetails(sound: 'slow_spring.board.aiff');
     var platformChannelSpecifics = NotificationDetails(
         androidPlatformChannelSpecifics, iosPlatformChannelSpecifics);
 
@@ -773,7 +771,7 @@ class SignedInPageState extends State<SignedInPage> {
       '${alert_term.inMinutes}분 후 도착 예정입니다!',
       scheduledNotificationDateTime,
       platformChannelSpecifics,
-      payload: 'Hello Flutter',
+      payload: '혹시 쓰레기통을 내놓지 않으셨다면 잊지 말고 내놓아 주시기 바랍니다!',
     );
     log.d('노티 등록 완료');
   }
