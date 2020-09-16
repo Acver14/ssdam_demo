@@ -18,12 +18,14 @@ class ReservationInfoProvider with ChangeNotifier{
   }
 
   // Setter
-  void setInitialInfo(String name, String uid, String email){
-    this._name = name;
+  void setInitialInfo(String uid, String email) {
     this._uid = uid;
     this._email = email;
   }
-  void setAddress(String address)=>this._address=address;
+
+  void setName(String name) => this._name = name;
+
+  void setAddress(String address) => this._address = address;
   void setDetailedAddress(String address)=>this._detailedAddress=address;
   void setReservationTime(DateTime dt)=>this._reservationTime=dt;
   void setApplicationTime(DateTime dt)=>this._applicationTime=dt;

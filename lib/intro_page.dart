@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intro_views_flutter/Models/page_view_model.dart';
 import 'package:intro_views_flutter/intro_views_flutter.dart';
+import 'package:ssdam_demo/auth/auth_page.dart';
 import 'package:ssdam_demo/auth/signin_page.dart';
 import 'package:ssdam_demo/style/customColor.dart';
 import 'package:intro_slider/dot_animation_enum.dart';
@@ -33,6 +34,7 @@ class IntroPage extends StatelessWidget {
         'assets/intro_view/intro_2.jpg',
         height: 285.0,
         width: 285.0,
+        fit: BoxFit.fitWidth,
         alignment: Alignment.center,
       ),
       titleTextStyle: TextStyle(fontFamily: 'MyFont', color: Colors.white),
@@ -56,7 +58,6 @@ class IntroPage extends StatelessWidget {
           alignment: Alignment.center,
         )),
   ];
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

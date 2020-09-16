@@ -24,6 +24,8 @@ class ReservationListPage extends StatefulWidget {
 
 class ReservationListPageState extends State<ReservationListPage> {
   FirebaseProvider fp;
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
+      new GlobalKey<RefreshIndicatorState>();
   var length;
   final _date_format = new DateFormat('yyyy-MM-dd hh:mm');
   List<Card> reservationList;
@@ -214,6 +216,7 @@ class ReservationListPageState extends State<ReservationListPage> {
                                 context: context,
                                 button: MaterialButton(
                                   onPressed: () {
+                                    (context as Element).reassemble();
                                     Navigator.pop(context);
                                   },
                                 ),

@@ -19,7 +19,7 @@ import 'package:ssdam_demo/customClass/time_picker_format_constant.dart';
 import 'package:ssdam_demo/customWidget/side_drawer.dart';
 import 'package:ssdam_demo/customWidget/loading_widget.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-
+import 'package:ssdam_demo/customWidget/temp_event_image.dart';
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -186,8 +186,7 @@ class SignedInPageState extends State<SignedInPage> {
     await fp.setUserInfo();
     await setDeviceToken();
     _user_info = fp.getUserInfo();
-    reservationInfo.setInitialInfo(
-        _user_info['name'], fp.getUser().uid, fp.getUser().email);
+    reservationInfo.setInitialInfo(fp.getUser().uid, fp.getUser().email);
     print(fp.getUser().toString());
     if (_user_info != null) {
       return _user_info;
@@ -197,11 +196,12 @@ class SignedInPageState extends State<SignedInPage> {
   @override
   Widget build(BuildContext context) {
     fp = Provider.of<FirebaseProvider>(context);
-    reservationInfo.setInitialInfo(
-        fp.getUser().displayName, fp.getUser().uid, fp.getUser().email);
-    Constant.setTimeRange(9, 18);
-    Constant.setMinuteRange(0, 59);
-    final double statusBarHeight = MediaQuery.of(context).padding.top;
+    // Constant.setTimeRange(9, 18);
+    // Constant.setMinuteRange(0, 59);
+    final double statusBarHeight = MediaQuery
+        .of(context)
+        .padding
+        .top;
     grid_height = getDisplayHeight(context) / 10;
     grid_width = getDisplayWidth(context) / 10;
     return Scaffold(
@@ -227,7 +227,27 @@ class SignedInPageState extends State<SignedInPage> {
               autoPlay: true,
               autoPlayInterval: Duration(seconds: 3),
             ),
-            items: eventSliders,
+            items: eventList
+                .map((item) =>
+                Container(
+                  child: Container(
+                    margin: EdgeInsets.all(5.0),
+                    child: ClipRRect(
+                        borderRadius: BorderRadius.all(Radius.circular(5.0)),
+                        child: FlatButton(
+                          child: Image.asset(
+                              item, fit: BoxFit.cover, width: 1000.0),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => eventPage(),
+                              ), //MaterialPageRoute
+                            );
+                          },
+                        )),
+                  ),
+                )).toList(),
           ),
           Divider(
             thickness: 5,
@@ -292,10 +312,9 @@ class SignedInPageState extends State<SignedInPage> {
               ? '${reservationInfo.getAddress()} ${reservationInfo.getDetailedAddress()}'
               : '어디로 가져다 드릴까요?',
           onPressed: () async {
-            KopoModel model = await Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => Kopo(),
-              ),
+            KopoModel model = await Navigator.push(
+              context,
+              CupertinoPageRoute(builder: (context) => Kopo()),
             );
             //print(model.toJson());
             if (model != null) {
@@ -572,9 +591,10 @@ class SignedInPageState extends State<SignedInPage> {
                           .uid)
                           .updateData(
                           {"tickets": fp.getUserInfo()['tickets'] - 1});
-                      setState(() async {
-                        await Loading();
-                      });
+                      reservationInfo.setName(fp.getUserInfo()['name']);
+                      // setState(() async {
+                      //   await Loading();
+                      // });
                       _showNotificationAtTime((reservationInfo
                           .getApplicationTime()
                           .millisecondsSinceEpoch
@@ -683,6 +703,7 @@ class SignedInPageState extends State<SignedInPage> {
           .getUser()
           .uid)
           .updateData({"getTrash?": _getTrash});
+      reservationInfo.setName(fp.getUserInfo()['name']);
       log.d('save to firestore');
       return PopupBox.showPopupBox(
           context: context,
@@ -708,19 +729,24 @@ class SignedInPageState extends State<SignedInPage> {
     }
   }
 
-  final List<Widget> eventSliders = eventList
-      .map((item) => Container(
-            child: Container(
-              margin: EdgeInsets.all(5.0),
-              child: ClipRRect(
-                  borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                  child: FlatButton(
-                    child: Image.asset(item, fit: BoxFit.fill, width: 1000.0),
-                    onPressed: () {},
-                  )),
-            ),
-  ))
-      .toList();
+  // List<Widget> eventSliders = eventList
+  //     .map((item) => Container(
+  //           child: Container(
+  //             margin: EdgeInsets.all(5.0),
+  //             child: ClipRRect(
+  //                 borderRadius: BorderRadius.all(Radius.circular(5.0)),
+  //                 child: FlatButton(
+  //                   child: Image.asset(item, fit: BoxFit.fill, width: 1000.0),
+  //                   onPressed: () {
+  //                     Navigator.push(
+  //                       MaterialPageRoute(
+  //                         builder: (context) => SignInPage(),
+  //                       ), //MaterialPageRoute
+  //                     );
+  //                   },
+  //                 )),
+  //           ),
+  // )).toList();
 
 
   Future _showNotificationAtTime(int id, Duration alert_term) async {

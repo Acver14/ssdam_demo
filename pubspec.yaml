@@ -32,7 +32,7 @@ dependencies:
   #bootpay_api: ^1.1.12
   iamport_flutter: ^0.9.11
   webview_flutter: ^0.3.22+1
-  url_launcher: ^5.4.2
+  url_launcher: ^5.5.3
 
   provider: ^3.1.0+1
   shared_preferences: ^0.5.3+4

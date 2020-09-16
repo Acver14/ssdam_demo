@@ -284,11 +284,16 @@ Widget userInterface(BuildContext context, FirebaseProvider fp) {
 launchBrowser(String url) async {
   if (await canLaunch(url)) {
     await launch(url, forceSafariVC: false, forceWebView: false);
+  } else {
+    throw 'could not launch';
   }
 }
 
 launchWebView(String url) async {
   if (await canLaunch(url)) {
     await launch(url, forceSafariVC: true, forceWebView: true);
+  }
+  else {
+    throw 'could not launch';
   }
 }
