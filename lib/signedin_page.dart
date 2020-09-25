@@ -546,10 +546,8 @@ class SignedInPageState extends State<SignedInPage> {
     setRememberRequests(reservationInfo.getCustomerRequests());
     reservationInfo.setApplicationTime(DateTime.now());
     if (fp.getUserInfo()["getTrash?"]) {
-      if (fp.getUserInfo()['tickets'] > 0) {
-        if (reservationInfo
-            .getAddress()
-            .length > 0) {
+      if (fp.getUserInfo()['tickets'] + fp.getUserInfo()['p_ticket'] > 0) {
+        if (reservationInfo.getAddress().length > 0) {
           return PopupBox.showPopupBox(
             context: context,
             button: Row(
@@ -580,18 +578,31 @@ class SignedInPageState extends State<SignedInPage> {
                       style: TextStyle(color: Colors.white, fontSize: 20),
                     ),
                     onPressed: () async {
-                      await reservationInfo.saveReservationInfo("collect");
                       // setState(() {
                       //   _tickets -= 1;
                       // });
-                      Firestore.instance
-                          .collection('userInfo')
-                          .document(fp
-                          .getUser()
-                          .uid)
-                          .updateData(
-                          {"tickets": fp.getUserInfo()['tickets'] - 1});
+                      if (fp.getUserInfo()['p_ticket'] > 0) {
+                        Firestore.instance
+                            .collection('userInfo')
+                            .document(fp
+                            .getUser()
+                            .uid)
+                            .updateData(
+                            {"p_ticket": fp.getUserInfo()['p_ticket'] - 1});
+                        reservationInfo.setPromotion(true);
+                      }
+                      else {
+                        Firestore.instance
+                            .collection('userInfo')
+                            .document(fp
+                            .getUser()
+                            .uid)
+                            .updateData(
+                            {"tickets": fp.getUserInfo()['tickets'] - 1});
+                        reservationInfo.setPromotion(false);
+                      }
                       reservationInfo.setName(fp.getUserInfo()['name']);
+                      await reservationInfo.saveReservationInfo("collect");
                       // setState(() async {
                       //   await Loading();
                       // });
@@ -610,6 +621,7 @@ class SignedInPageState extends State<SignedInPage> {
                               0,
                               0,
                               0).millisecondsSinceEpoch),
+                          reservationInfo.getReservationTime(),
                           Duration(minutes: 30));
                       Navigator.pop(context);
                       print('예약 완료');
@@ -748,9 +760,9 @@ class SignedInPageState extends State<SignedInPage> {
   //           ),
   // )).toList();
 
-
-  Future _showNotificationAtTime(int id, Duration alert_term) async {
-    var scheduledNotificationDateTime = new DateTime.now().add(alert_term);
+  Future _showNotificationAtTime(int id, DateTime target_time,
+      Duration alert_term) async {
+    var scheduledNotificationDateTime = target_time.subtract(alert_term);
 
     //reservationInfo.getReservationTime().subtract(alert_term);      알람까지 지연시간
 

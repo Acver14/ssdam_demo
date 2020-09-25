@@ -241,14 +241,15 @@ Widget userInterface(BuildContext context, FirebaseProvider fp) {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Text(
-            '${fp.getUserInfo()['name']}님 환영합니다!',
+            '${fp.getUser().displayName ?? fp.getUserInfo()['name']}님 환영합니다!',
             style: TextStyle(color: Colors.white),
           ),
           // Text(
           //     'Lv. ${fp.getUserInfo()['level']}'
           // ),
           Text(
-            '이용권 : ${fp.getUserInfo()['tickets']}',
+            '이용권 : ${fp.getUserInfo()['tickets']} + ${fp
+                .getUserInfo()['p_ticket']}',
             style: TextStyle(
                 color: Colors.white
             ),

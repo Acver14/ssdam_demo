@@ -27,7 +27,7 @@ class ReservationListPageState extends State<ReservationListPage> {
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       new GlobalKey<RefreshIndicatorState>();
   var length;
-  final _date_format = new DateFormat('yyyy-MM-dd hh:mm');
+  final _date_format = new DateFormat('yyyy-MM-dd HH:mm');
   List<Card> reservationList;
   final ScrollController _infiniteController =
       ScrollController(initialScrollOffset: 0.0);
@@ -179,6 +179,10 @@ class ReservationListPageState extends State<ReservationListPage> {
                                   .collection('reservationInfo')
                                   .document(reservationID)
                                   .setData({'state': 'cancel'}, merge: true);
+                              await Firestore.instance
+                                  .collection('registerReservationList')
+                                  .document(doc['_id'])
+                                  .delete();
                               if ((doc["reservationTime"])
                                   .toDate()
                                   .difference(Timestamp.now().toDate())

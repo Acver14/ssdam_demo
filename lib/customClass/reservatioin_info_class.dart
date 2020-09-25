@@ -5,16 +5,17 @@ class ReservationInfoProvider with ChangeNotifier{
   String _name;
   String _uid;
   String _email;
-  String _address='';
-  String _detailedAddress='';
+  String _address = '';
+  String _detailedAddress = '';
   String _customerRequests;
   DateTime _reservationTime;
   DateTime _applicationTime;
+  bool _promotion;
 
-  ReservationInfoProvider(){
-    _detailedAddress='';
-    _address='';
-    _customerRequests='';
+  ReservationInfoProvider() {
+    _detailedAddress = '';
+    _address = '';
+    _customerRequests = '';
   }
 
   // Setter
@@ -29,8 +30,10 @@ class ReservationInfoProvider with ChangeNotifier{
   void setDetailedAddress(String address)=>this._detailedAddress=address;
   void setReservationTime(DateTime dt)=>this._reservationTime=dt;
   void setApplicationTime(DateTime dt)=>this._applicationTime=dt;
-  void setCustomerRequests(String rq)=>this._customerRequests=rq;
 
+  void setCustomerRequests(String rq) => this._customerRequests = rq;
+
+  void setPromotion(bool pr) => this._promotion = pr;
   //Getter
   String getName(){return _name;}
   String getUid(){return _uid;}
@@ -39,7 +42,14 @@ class ReservationInfoProvider with ChangeNotifier{
   String getDetailedAddress(){return _detailedAddress;}
   String getCustomerRequests(){return _customerRequests;}
   DateTime getReservationTime(){return _reservationTime;}
-  DateTime getApplicationTime(){return _applicationTime;}
+
+  DateTime getApplicationTime() {
+    return _applicationTime;
+  }
+
+  bool getPromotion() {
+    return _promotion;
+  }
 
   Future<void> saveReservationInfo(String rType) async {
     Firestore.instance
@@ -58,9 +68,25 @@ class ReservationInfoProvider with ChangeNotifier{
       "applicationTime": _applicationTime,
       "customerRequest": _customerRequests,
       "type": rType,
-      "state": 'register'
-    }
-    );
+      "state": 'register',
+      "promotion": _promotion,
+      "_id": '${_email}_${_applicationTime.millisecondsSinceEpoch}'
+    });
+
+    Firestore.instance
+        .collection('registerReservationList')
+        .document('${_email}_${_applicationTime.millisecondsSinceEpoch}')
+        .setData({
+      "name": _name,
+      "email": _email,
+      "address": _address,
+      "detailedAddress": _detailedAddress,
+      "reservationTime": _reservationTime,
+      "applicationTime": _applicationTime,
+      "customerRequest": _customerRequests,
+      "type": rType,
+      "_id": _uid
+    });
   }
 
 }

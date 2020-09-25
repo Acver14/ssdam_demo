@@ -17,7 +17,7 @@ class Payment_periodic20000 extends StatelessWidget {
     fp = Provider.of<FirebaseProvider>(context);
     return IamportPayment(
       appBar: new AppBar(
-        title: new Text('아임포트 결제'),
+        title: new Text('쓰담 이용권 구매'),
       ),
       /* 웹뷰 로딩 컴포넌트 */
       initialChild: Container(
@@ -25,7 +25,6 @@ class Payment_periodic20000 extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset('assets/images/iamport-logo.png'),
               Container(
                 padding: EdgeInsets.fromLTRB(0.0, 30.0, 0.0, 0.0),
                 child: Text('잠시만 기다려주세요...', style: TextStyle(fontSize: 20.0)),
@@ -40,7 +39,7 @@ class Payment_periodic20000 extends StatelessWidget {
       data: PaymentData.fromJson({
         'pg': 'html5_inicis', // PG사
         'payMethod': 'card', // 결제수단
-        'name': '아임포트 결제데이터 분석', // 주문명
+        'name': '쓰담 이용권 구매', // 주문명
         'merchantUid':
             '${fp.getUserInfo()['email']}_periodic20000_${DateTime.now().millisecondsSinceEpoch}', // 주문번호
         'amount': 20000, // 결제금액
@@ -74,7 +73,7 @@ class Payment_periodic30000 extends StatelessWidget {
     fp = Provider.of<FirebaseProvider>(context);
     return IamportPayment(
       appBar: new AppBar(
-        title: new Text('아임포트 결제'),
+        title: new Text('쓰담 이용권 구매'),
       ),
       /* 웹뷰 로딩 컴포넌트 */
       initialChild: Container(
@@ -82,7 +81,6 @@ class Payment_periodic30000 extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset('assets/images/iamport-logo.png'),
               Container(
                 padding: EdgeInsets.fromLTRB(0.0, 30.0, 0.0, 0.0),
                 child: Text('잠시만 기다려주세요...', style: TextStyle(fontSize: 20.0)),
@@ -97,9 +95,11 @@ class Payment_periodic30000 extends StatelessWidget {
       data: PaymentData.fromJson({
         'pg': 'html5_inicis', // PG사
         'payMethod': 'card', // 결제수단
-        'name': '아임포트 결제데이터 분석', // 주문명
+        'name': '쓰담 이용권 구매', // 주문명
         'merchantUid':
-            '${fp.getUserInfo()['email']}_periodic30000_${DateTime.now().millisecondsSinceEpoch}', // 주문번호
+        '${fp.getUserInfo()['email']}_periodic30000_${DateTime
+            .now()
+            .millisecondsSinceEpoch}', // 주문번호
         'amount': 30000, // 결제금액
         'buyerName': fp.getUserInfo()['name'], // 구매자 이름
         'buyerTel': '01012345678', // 구매자 연락처
@@ -131,7 +131,7 @@ class Payment_periodic40000 extends StatelessWidget {
     fp = Provider.of<FirebaseProvider>(context);
     return IamportPayment(
       appBar: new AppBar(
-        title: new Text('아임포트 결제'),
+        title: new Text('쓰담 이용권 구매'),
       ),
       /* 웹뷰 로딩 컴포넌트 */
       initialChild: Container(
@@ -139,7 +139,6 @@ class Payment_periodic40000 extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset('assets/images/iamport-logo.png'),
               Container(
                 padding: EdgeInsets.fromLTRB(0.0, 30.0, 0.0, 0.0),
                 child: Text('잠시만 기다려주세요...', style: TextStyle(fontSize: 20.0)),
@@ -154,9 +153,11 @@ class Payment_periodic40000 extends StatelessWidget {
       data: PaymentData.fromJson({
         'pg': 'html5_inicis', // PG사
         'payMethod': 'card', // 결제수단
-        'name': '아임포트 결제데이터 분석', // 주문명
+        'name': '쓰담 이용권 구매', // 주문명
         'merchantUid':
-            '${fp.getUserInfo()['email']}_periodic40000_${DateTime.now().millisecondsSinceEpoch}', // 주문번호
+        '${fp.getUserInfo()['email']}_periodic40000_${DateTime
+            .now()
+            .millisecondsSinceEpoch}', // 주문번호
         'amount': 40000, // 결제금액
         'buyerName': fp.getUserInfo()['name'], // 구매자 이름
         'buyerTel': '01012345678', // 구매자 연락처

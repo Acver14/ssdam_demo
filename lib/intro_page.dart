@@ -13,34 +13,6 @@ class IntroPage extends StatelessWidget {
   //making list of pages needed to pass in IntroViewsFlutter constructor.
   final pages = [
     PageViewModel(
-      pageColor: const Color(0xFF696F73),
-      body: Text(
-        '',
-      ),
-      title: Text('쓰담'),
-      mainImage: Image.asset(
-        'assets/intro_view/intro_1.png',
-        fit: BoxFit.fitWidth,
-        alignment: Alignment.center,
-      ),
-      titleTextStyle: TextStyle(fontFamily: 'MyFont', color: Colors.white),
-      bodyTextStyle: TextStyle(fontFamily: 'MyFont', color: Colors.white),
-    ),
-    PageViewModel(
-      pageColor: const Color(0xFF9CB6CF),
-      body: Text(''),
-      title: Text('쓰담'),
-      mainImage: Image.asset(
-        'assets/intro_view/intro_2.jpg',
-        height: 285.0,
-        width: 285.0,
-        fit: BoxFit.fitWidth,
-        alignment: Alignment.center,
-      ),
-      titleTextStyle: TextStyle(fontFamily: 'MyFont', color: Colors.white),
-      bodyTextStyle: TextStyle(fontFamily: 'MyFont', color: Colors.white),
-    ),
-    PageViewModel(
         pageColor: COLOR_SSDAM,
         bubble: Image.asset(''),
         title: Text(
@@ -52,11 +24,36 @@ class IntroPage extends StatelessWidget {
         titleTextStyle: TextStyle(fontFamily: 'Roboto', color: Colors.white),
         bodyTextStyle: TextStyle(fontFamily: 'Roboto', color: Colors.white),
         mainImage: Image.asset(
-          'assets/ssdam_logo.png',
-          height: 285.0,
-          width: 285.0,
+          'assets/intro_view/intro_0.png',
+          fit: BoxFit.fitHeight,
           alignment: Alignment.center,
         )),
+    PageViewModel(
+      pageColor: COLOR_SSDAM,
+      body: Text(
+        '',
+      ),
+      title: Text('쓰담'),
+      mainImage: Image.asset(
+        'assets/intro_view/intro_1.png',
+        fit: BoxFit.fitHeight,
+        alignment: Alignment.center,
+      ),
+      titleTextStyle: TextStyle(fontFamily: 'MyFont', color: Colors.white),
+      bodyTextStyle: TextStyle(fontFamily: 'MyFont', color: Colors.white),
+    ),
+    PageViewModel(
+      pageColor: COLOR_SSDAM,
+      body: Text(''),
+      title: Text('쓰담'),
+      mainImage: Image.asset(
+        'assets/intro_view/intro_2.jpg',
+        fit: BoxFit.fitHeight,
+        alignment: Alignment.center,
+      ),
+      titleTextStyle: TextStyle(fontFamily: 'MyFont', color: Colors.white),
+      bodyTextStyle: TextStyle(fontFamily: 'MyFont', color: Colors.white),
+    ),
   ];
   @override
   Widget build(BuildContext context) {
