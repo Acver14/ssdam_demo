@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1013338580818-rii33ka60hl80s6dv845aj5t0938b2p8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ssdam.ssdam_demo",
+            "certificate_hash": "22dab2b53d4a1aa9a72606f789377c20ae87fedc"
+          }
+        },
+        {
           "client_id": "1013338580818-im441r8ip3jiovamhkk2jt24029dt8uo.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -40,10 +48,62 @@
               "client_type": 3
             },
             {
-              "client_id": "1013338580818-obk7fd4krm8n6qfuuun7nd89ctiu7l4c.apps.googleusercontent.com",
+              "client_id": "1013338580818-gg0aqj30hcchk1lnodevl36q0rcpjo5l.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.ssdam"
+                "bundle_id": "com.ssdam.ssdamDemo"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1013338580818:android:cda0c6c9f1b671f4487c8b",
+        "android_client_info": {
+          "package_name": "com.ssdam.ssdam_rider_demo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1013338580818-g9uivk3k01lutfdappkf2jlt86km9j8o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ssdam.ssdam_rider_demo",
+            "certificate_hash": "22dab2b53d4a1aa9a72606f789377c20ae87fedc"
+          }
+        },
+        {
+          "client_id": "1013338580818-to5nio68q2qprj893jiu2de6c8nb4sk7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ssdam.ssdam_rider_demo",
+            "certificate_hash": "d562ee906d19cdcc14816fbe8e88477dd41e8525"
+          }
+        },
+        {
+          "client_id": "1013338580818-t7grt165pl0qcsv0gippaog9dkp9298f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC22QPzLwtP8y2bmxnw38u8oUON9D_kKw0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1013338580818-t7grt165pl0qcsv0gippaog9dkp9298f.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1013338580818-gg0aqj30hcchk1lnodevl36q0rcpjo5l.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ssdam.ssdamDemo"
               }
             }
           ]
