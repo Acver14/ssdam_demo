@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ssdam_demo/firebase_provider.dart';
@@ -47,8 +48,6 @@ class SignInPageState extends State<SignInPage> {
   @override
   Widget build(BuildContext context) {
     fp = Provider.of<FirebaseProvider>(context);
-
-    logger.d(fp.getUser());
     return Scaffold(
       key: _scaffoldKey,
       body: ListView(
@@ -140,9 +139,10 @@ class SignInPageState extends State<SignInPage> {
                       child: Text("인증 메일 재전송"),
                       onPressed: () {
                         FocusScope.of(context)
-                            .requestFocus(new FocusNode()); // 키보드 감춤
-                        fp.getUser().sendEmailVerification();
-                      },
+                              .requestFocus(new FocusNode()); // 키보드 감춤
+                          fp.getUser().sendEmailVerification();
+                          showGuidance('인증 메일이 재전송되었습니다.');
+                        },
                     )
                   ],
                 ),
@@ -162,25 +162,29 @@ class SignInPageState extends State<SignInPage> {
                       fontFamily: "Roboto",
                       fontWeight: FontWeight.w500,),
                   ),
-                  onPressed: () {
-                    FocusScope.of(context).requestFocus(new FocusNode()); // 키보드 감춤
-                    _signIn();
+                  onPressed: () async {
+                    FocusScope.of(context).requestFocus(
+                        new FocusNode()); // 키보드 감춤
+                    await _signIn();
                   },
                 ),
               ),
           GoogleSignInButton(
-            onPressed: () {
+            onPressed: () async {
               FocusScope.of(context).requestFocus(new FocusNode()); // 키보드 감춤
-              _signInWithGoogle();
+              await _signInWithGoogle();
             },
           ),
           AppleSignInButton(
-            onPressed: () {},
+            onPressed: () async {
+              FocusScope.of(context).requestFocus(new FocusNode());
+              await _signInWithApple();
+            },
           ),
-          FacebookSignInButton(onPressed: () {
-            FocusScope.of(context).requestFocus(new FocusNode()); // 키보드 감춤
-            _signInWithFacebook();
-          }),
+              FacebookSignInButton(onPressed: () async {
+                FocusScope.of(context).requestFocus(new FocusNode()); // 키보드 감춤
+                await _signInWithFacebook();
+              }),
           // KakaoSignInButton(
           //   onPressed: () {}//=> Navigator.push(context, MaterialPageRoute(builder: (context) => KakaoLoginTest())),
           // ),
@@ -210,7 +214,7 @@ class SignInPageState extends State<SignInPage> {
     );
   }
 
-  void _signIn() async {
+  _signIn() async {
     _scaffoldKey.currentState
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
@@ -228,7 +232,7 @@ class SignInPageState extends State<SignInPage> {
     if (result == false) showLastFBMessage();
   }
 
-  void _signInWithGoogle() async {
+  _signInWithGoogle() async {
     _scaffoldKey.currentState
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
@@ -245,7 +249,24 @@ class SignInPageState extends State<SignInPage> {
     if (result == false) showLastFBMessage();
   }
 
-  void _signInWithFacebook() async {
+  _signInWithApple() async {
+    _scaffoldKey.currentState
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        duration: Duration(seconds: 10),
+        content: Row(
+          children: <Widget>[
+            CircularProgressIndicator(),
+            Text("로그인 중입니다...")
+          ],
+        ),
+      ));
+    bool result = await fp.signInWithAppleAccount(context);
+    _scaffoldKey.currentState.hideCurrentSnackBar();
+    if (result == false) showLastFBMessage();
+  }
+
+  _signInWithFacebook() async {
     _scaffoldKey.currentState
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
@@ -259,7 +280,7 @@ class SignInPageState extends State<SignInPage> {
       ));
     bool result = await fp.signInWithFacebookAccount(context);
     _scaffoldKey.currentState.hideCurrentSnackBar();
-    if (result == -1) showLastFBMessage();
+    if (result == false) showLastFBMessage();
   }
 
   //
@@ -317,4 +338,20 @@ class SignInPageState extends State<SignInPage> {
         ),
       ));
   }
+
+  showGuidance(String text) {
+    _scaffoldKey.currentState
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        backgroundColor: Colors.black,
+        duration: Duration(seconds: 10),
+        content: Text(text),
+        action: SnackBarAction(
+          label: "Done",
+          textColor: Colors.white,
+          onPressed: () {},
+        ),
+      ));
+  }
+
 }

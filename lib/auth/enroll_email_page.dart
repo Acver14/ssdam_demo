@@ -3,6 +3,8 @@ import 'package:ssdam_demo/firebase_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:popup_box/popup_box.dart';
+
 EnrollEmailPageState pageState;
 
 class EnrollEmailPage extends StatefulWidget {
@@ -111,9 +113,36 @@ class EnrollEmailPageState extends State<EnrollEmailPage> {
           ],
         ),
       ));
-    bool result = await fp.enroll_email(_mailCon.text.trim());
+    bool result = true; //await fp.enroll_email(_mailCon.text.trim());
     _scaffoldKey.currentState.hideCurrentSnackBar();
     if (result) {
+      // await PopupBox.showPopupBox(
+      //     context: context,
+      //     button: MaterialButton(
+      //       shape: RoundedRectangleBorder(
+      //         borderRadius: BorderRadius.circular(20),
+      //       ),
+      //     ),
+      //     willDisplayWidget: Column(
+      //       children: <Widget>[
+      //         Text(
+      //           '등록하신 이메일로 인증 확인부탁드리겠습니다.',
+      //           style: TextStyle(fontSize: 16, color: Colors.black),
+      //         ),
+      //       ],
+      //     ));
+      _scaffoldKey.currentState
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+          backgroundColor: Colors.black12,
+          duration: Duration(seconds: 10),
+          content: Text('등록하신 이메일로 인증 확인부탁드리겠습니다.'),
+          action: SnackBarAction(
+            label: "Done",
+            textColor: Colors.white,
+            onPressed: () {},
+          ),
+        ));
       Navigator.pop(context);
     } else {
       showLastFBMessage();

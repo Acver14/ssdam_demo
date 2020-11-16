@@ -37,13 +37,15 @@ class ReservationButton extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(0.0, 8.0, 8.0, 8.0),
               child: Text(
-                text,
-                style: textStyle ?? TextStyle(
-                  fontSize: 18.0,
-                  fontFamily: "Roboto",
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
-                ),
+                text.length > 30 ? '${text.substring(0, 27)}...' : text,
+                textAlign: TextAlign.center,
+                style: textStyle ??
+                    TextStyle(
+                      fontSize: 18.0,
+                      fontFamily: "Roboto",
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
               ),
             )
         )

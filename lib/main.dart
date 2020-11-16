@@ -35,7 +35,7 @@ class MyApp extends StatelessWidget {
           const Locale('ko', 'KR'),
           // include country code too
         ],
-        title: "Flutter Firebase",
+        title: "쓰담",
         debugShowCheckedModeBanner: false,
         home: AuthPage(),
       ),

@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<string>ko_KR</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,28 +15,70 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>$(FLUTTER_BUILD_NAME)</string>
+	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleURLTypes</key>
-    	<array>
-    		<dict>
-    			<key>CFBundleTypeRole</key>
-    			<string>Editor</string>
-    			<key>CFBundleURLName</key>
-    			<string></string>
-    			<key>CFBundleURLSchemes</key>
-    			<array>
-    				<string>com.ssdam.ssdamDemo</string>
-    				<string>com.googleusercontent.apps.1013338580818-gg0aqj30hcchk1lnodevl36q0rcpjo5l</string>
-    			</array>
-    		</dict>
-    		<dict/>
-    	</array>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fb313973653225863</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.1013338580818-gg0aqj30hcchk1lnodevl36q0rcpjo5l</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
-	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>FacebookAppID</key>
+	<string>313973653225863</string>
+	<key>FacebookDisplayName</key>
+	<string>쓰담</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>fbapi</string>
+		<string>fbapi20130214</string>
+		<string>fbapi20130410</string>
+		<string>fbapi20130702</string>
+		<string>fbapi20131010</string>
+		<string>fbapi20131219</string>
+		<string>fbapi20140410</string>
+		<string>fbapi20140116</string>
+		<string>fbapi20150313</string>
+		<string>fbapi20150629</string>
+		<string>fbapi20160328</string>
+		<string>fbauth</string>
+		<string>fb-messenger-share-api</string>
+		<string>fbauth2</string>
+		<string>fbshareextension</string>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>To take pictures of your trash</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>To check your access</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>To bring your picture</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -57,86 +99,6 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
 	<key>io.flutter.embedded_views_preview</key>
-    <string>YES</string>
-	<key>io.flutter.embedded_views_preview</key>
-    	<true/>
-    	<key>NSPhotoLibraryUsageDescription</key>
-    	<string></string>
-    	<key>NSCameraUsageDescription</key>
-    	<string></string>
-    	<key>NSMicrophoneUsageDescription</key>
-    	<string></string>
-    	<key>LSApplicationQueriesSchemes</key>
-    <array>
-      <string>kftc-bankpay</string> <!-- 계좌이체 -->
-      <string>ispmobile</string> <!-- ISP모바일 -->
-      <string>itms-apps</string> <!-- 앱스토어 -->
-      <string>hdcardappcardansimclick</string> <!-- 현대카드-앱카드 -->
-      <string>smhyundaiansimclick</string> <!-- 현대카드-공인인증서 -->
-      <string>shinhan-sr-ansimclick</string> <!-- 신한카드-앱카드 -->
-      <string>smshinhanansimclick</string> <!-- 신한카드-공인인증서 -->
-      <string>kb-acp</string> <!-- 국민카드-앱카드 -->
-      <string>mpocket.online.ansimclick</string> <!-- 삼성카드-앱카드 -->
-      <string>ansimclickscard</string> <!-- 삼성카드-온라인결제 -->
-      <string>ansimclickipcollect</string> <!-- 삼성카드-온라인결제 -->
-      <string>vguardstart</string> <!-- 삼성카드-백신 -->
-      <string>samsungpay</string> <!-- 삼성카드-삼성페이 -->
-      <string>scardcertiapp</string> <!-- 삼성카드-공인인증서 -->
-      <string>lottesmartpay</string> <!-- 롯데카드-모바일결제 -->
-      <string>lotteappcard</string> <!-- 롯데카드-앱카드 -->
-      <string>cloudpay</string> <!-- 하나카드-앱카드 -->
-      <string>nhappcardansimclick</string> <!-- 농협카드-앱카드 -->
-      <string>nonghyupcardansimclick</string> <!-- 농협카드-공인인증서 -->
-      <string>citispay</string> <!-- 씨티카드-앱카드 -->
-      <string>citicardappkr</string> <!-- 씨티카드-공인인증서 -->
-      <string>citimobileapp</string> <!-- 씨티카드-간편결제 -->
-      <string>kakaotalk</string> <!-- 카카오톡 -->
-      <string>payco</string> <!-- 페이코 -->
-      <string>lpayapp</string> <!-- 롯데 L페이 -->
-      <string>hanamopmoasign</string> <!-- 하나카드 공인인증앱 -->
-      <string>wooripay</string> <!-- 우리페이 -->
-      <string>nhallonepayansimclick</string> <!-- NH 올원페이 -->
-      <string>hanawalletmembers</string> <!-- 하나카드(하나멤버스 월렛) -->
-    </array>
-    <key>NSAppTransportSecurity</key>
-    <dict>
-      <!-- Allow Arbitrary Loads in Web Content 속성을 true로 설정 -->
-      <key>NSAllowsArbitraryLoadsInWebContent</key>
-      <true/>
-      <key>NSAllowsArbitraryLoads</key>
-      <true/>
-    </dict>
-        <key>CFBundleURLTypes</key>
-    <array>
-        <dict>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>fb313973653225863</string>
-            </array>
-        </dict>
-    </array>
-    <key>FacebookAppID</key>
-    <string>313973653225863</string>
-    <key>FacebookDisplayName</key>
-    <string>쓰담</string>
-
-    <key>LSApplicationQueriesSchemes</key>
-    <array>
-        <string>fbapi</string>
-        <string>fbapi20130214</string>
-        <string>fbapi20130410</string>
-        <string>fbapi20130702</string>
-        <string>fbapi20131010</string>
-        <string>fbapi20131219</string>
-        <string>fbapi20140410</string>
-        <string>fbapi20140116</string>
-        <string>fbapi20150313</string>
-        <string>fbapi20150629</string>
-        <string>fbapi20160328</string>
-        <string>fbauth</string>
-        <string>fb-messenger-share-api</string>
-        <string>fbauth2</string>
-        <string>fbshareextension</string>
-    </array>
+	<true/>
 </dict>
 </plist>

@@ -1,3 +1,4 @@
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -23,13 +24,14 @@ import 'package:ssdam_demo/customWidget/temp_event_image.dart';
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:ntp/ntp.dart';
 
 SignedInPageState pageState;
 
 final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
 
 FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
+FlutterLocalNotificationsPlugin();
 
 final List<String> eventList = ['assets/event/event_0.png'];
 
@@ -43,15 +45,23 @@ class SignedInPage extends StatefulWidget {
 
 class SignedInPageState extends State<SignedInPage> {
   FirebaseProvider fp;
+  FirebaseStorage fs = FirebaseStorage.instance;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _getTrash = false;
   DateTime _reservation_time;
+  var time_zone;
+  DateTime _now;
   var _icon_button = "close_trash.png";
   TextEditingController detailAddressCont = TextEditingController();
   TextEditingController customerRequestCont = TextEditingController();
   ReservationInfoProvider reservationInfo = new ReservationInfoProvider();
   var grid_height, grid_width;
   var log = Logger();
+  int event_num = 0;
+  var event_info;
+  var button_pressed = false;
+  var token_save = false;
+  List<String> _event_list = new List();
 
   void firebaseCloudMessaging_Listeners() {
     if (Platform.isIOS) iOS_Permission();
@@ -82,28 +92,37 @@ class SignedInPageState extends State<SignedInPage> {
     });
   }
 
+  setDeviceToken() async {
+    await Firestore.instance
+        .collection('fcmTokenInfo')
+        .document(fp.getUser().uid)
+        .setData({'token': fp.token});
+    logger.d('setDeviceToke: ${fp.getUser().uid}, ${fp.token}');
+    token_save = true;
+  }
+
   @override
   initState() {
     super.initState();
     firebaseCloudMessaging_Listeners();
     getRememberAddr();
     getRememberRequests();
-    setReservationTime();
-    log.d(reservationInfo.getReservationTime());
-    log.d(reservationInfo.getAddress());
-
+    //setReservationTime();
+    eventSetting();
     // for local_noti
     var androidSetting = AndroidInitializationSettings('@mipmap/ic_launcher');
     var iosSetting = IOSInitializationSettings();
     var initializationSettings =
-    InitializationSettings(androidSetting, iosSetting);
-
+        InitializationSettings(androidSetting, iosSetting);
+    loadingBanner();
     _flutterLocalNotificationsPlugin.initialize(initializationSettings,
         onSelectNotification: onSelectNotification);
+    Timer.periodic(new Duration(minutes: 3), (timer) {
+      fp.setUserInfo_notify();
+    });
   }
 
   Future onSelectNotification(String payload) async {
-    log.d('noti??');
     showDialog(
         context: context,
         builder: (_) =>
@@ -113,27 +132,42 @@ class SignedInPageState extends State<SignedInPage> {
             ));
   }
 
-  setReservationTime() {
-    DateTime tmpTime = DateTime.now();
-    log.d('before: ${tmpTime}');
-    if (tmpTime.hour > 8 && tmpTime.hour < 12 ||
-        tmpTime.hour > 17 && tmpTime.hour < 19) {
-      _reservation_time = tmpTime.add(Duration(hours: 1));
-    } else if (tmpTime.hour >= 12 && tmpTime.hour <= 17) {
+  setReservationTime() async {
+    DateTime tmpTime = await NTP.now();
+    // if (tmpTime.hour > 8 && tmpTime.hour < 12 ||
+    //     tmpTime.hour > 17 && tmpTime.hour < 19) {
+    //   _reservation_time = tmpTime.add(Duration(hours: 1));
+    // } else if (tmpTime.hour >= 12 && tmpTime.hour <= 17) {
+    //   _reservation_time =
+    //       DateTime(
+    //           tmpTime.year,
+    //           tmpTime.month,
+    //           tmpTime.day,
+    //           18,
+    //           0,
+    //           0,
+    //           0,
+    //           0);
+    // } else {
+    //   tmpTime = tmpTime.add(Duration(days: 1));
+    //   _reservation_time =
+    //       DateTime(tmpTime.year, tmpTime.month, tmpTime.day, 9, 0, 0, 0, 0);
+    // }
+    // if (_reservation_time.weekday == 6) {
+    //   _reservation_time = _reservation_time.add(Duration(days: 2));
+    // } else if (_reservation_time.weekday == 7) {
+    //   _reservation_time = _reservation_time.add(Duration(days: 1));
+    // }
+    // reservationInfo.setReservationTime(_reservation_time);
+
+    if (tmpTime.hour < 12) {
       _reservation_time =
-          DateTime(
-              tmpTime.year,
-              tmpTime.month,
-              tmpTime.day,
-              18,
-              0,
-              0,
-              0,
-              0);
+          DateTime(tmpTime.year, tmpTime.month, tmpTime.day, 20, 0);
+      time_zone = '오후';
     } else {
-      tmpTime = tmpTime.add(Duration(days: 1));
       _reservation_time =
-          DateTime(tmpTime.year, tmpTime.month, tmpTime.day, 9, 0, 0, 0, 0);
+          DateTime(tmpTime.year, tmpTime.month, tmpTime.day + 1, 12, 0);
+      time_zone = '오전';
     }
     if (_reservation_time.weekday == 6) {
       _reservation_time = _reservation_time.add(Duration(days: 2));
@@ -171,26 +205,51 @@ class SignedInPageState extends State<SignedInPage> {
     prefs.setString("recentlyCustomerRequests", rq ?? '');
   }
 
-  setDeviceToken() async {
-    await Firestore.instance
-        .collection('fcmTokenInfo')
-        .document(fp
+  Future<Map<String, dynamic>> Loading() async {
+    //Map<String, dynamic> _user_info = null;
+    // var _getUserInfo = await fp.setUserInfo();
+    if (_reservation_time == null) await setReservationTime();
+    // while(!_getUserInfo){
+    //  _getUserInfo = await fp.setUserInfo();
+    // }
+
+    //_now = await NTP.now();
+    //_user_info = fp.getUserInfo();
+    //logger.d(_getUserInfo);
+    if (fp.getUserInfo() == null || fp
+        .getUserInfo()
+        .length == 0) {
+      await fp.setUserInfo();
+    }
+    reservationInfo.setInitialInfo(fp
         .getUser()
-        .uid)
-        .setData({'token': fp.token});
-    log.d('device token save');
+        .uid, fp
+        .getUser()
+        .email);
+    if (!token_save) setDeviceToken();
+    // if (_getUserInfo) {
+    //   return fp.getUserInfo();
+    // }
+    return fp.getUserInfo();
   }
 
-  Future<Map<String, dynamic>> Loading() async {
-    Map<String, dynamic> _user_info = null;
-    await fp.setUserInfo();
-    await setDeviceToken();
-    _user_info = fp.getUserInfo();
-    reservationInfo.setInitialInfo(fp.getUser().uid, fp.getUser().email);
-    print(fp.getUser().toString());
-    if (_user_info != null) {
-      return _user_info;
+  Future<List<String>> loadingBanner() async {
+    //logger.d(_event_list.length);
+    if (_event_list.length == 0) {
+      for (int i = 0; i < event_num; i++) {
+        _event_list.add(await FirebaseStorage.instance.ref()
+            .child('banner/event_$i.png')
+            .getDownloadURL());
+      }
     }
+    return _event_list;
+  }
+
+  Future<void> eventSetting() async {
+    event_info = await Firestore.instance.collection('ssdamInfo')
+        .document('bannerState')
+        .get();
+    event_num = event_info.data.length;
   }
 
   @override
@@ -204,6 +263,7 @@ class SignedInPageState extends State<SignedInPage> {
         .top;
     grid_height = getDisplayHeight(context) / 10;
     grid_width = getDisplayWidth(context) / 10;
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       extendBodyBehindAppBar: true,
@@ -219,35 +279,53 @@ class SignedInPageState extends State<SignedInPage> {
           Container(
               child: Padding(padding: EdgeInsets.only(top: statusBarHeight))
           ),
-          CarouselSlider(
-            options: CarouselOptions(
-              height: grid_height * 3,
-              reverse: true,
-              initialPage: 0,
-              autoPlay: true,
-              autoPlayInterval: Duration(seconds: 3),
-            ),
-            items: eventList
-                .map((item) =>
-                Container(
-                  child: Container(
-                    margin: EdgeInsets.all(5.0),
-                    child: ClipRRect(
-                        borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                        child: FlatButton(
-                          child: Image.asset(
-                              item, fit: BoxFit.cover, width: 1000.0),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => eventPage(),
-                              ), //MaterialPageRoute
-                            );
-                          },
-                        )),
-                  ),
-                )).toList(),
+          FutureBuilder(
+              future: loadingBanner(),
+              builder: (BuildContext context, AsyncSnapshot snapshot) {
+                if (snapshot.hasData) {
+                  //(snapshot.data);
+                  List<String>events = snapshot.data;
+                  return CarouselSlider(
+                    options: CarouselOptions(
+                      height: grid_height * 3,
+                      reverse: true,
+                      initialPage: 0,
+                      autoPlay: true,
+                      autoPlayInterval: Duration(seconds: 3),
+                    ),
+                    items: events // 네트워크 이미지 보류
+                        .map((item) =>
+                        Container(
+                          child: Container(
+                            margin: EdgeInsets.all(5.0),
+                            child: ClipRRect(
+                                borderRadius: BorderRadius.all(
+                                    Radius.circular(5.0)),
+                                child: FlatButton(
+                                  child: Image.network(
+                                      item, fit: BoxFit.cover, width: 1000.0),
+                                  onPressed: () {
+                                    // Navigator.push(
+                                    //   context,
+                                    //   MaterialPageRoute(
+                                    //     builder: (context) => eventPage(),
+                                    //   ), //MaterialPageRoute
+                                    // );
+                                    var idx = events.indexOf(item);
+                                    launchWebView(
+                                        'https://' + event_info['event_$idx']);
+                                  },
+                                )),
+                          ),
+                        )).toList(),
+                  );
+                } else {
+                  return Container(
+                    height: grid_height * 3,
+                    child: widgetLoading(),
+                  );
+                }
+              }
           ),
           Divider(
             thickness: 5,
@@ -259,10 +337,14 @@ class SignedInPageState extends State<SignedInPage> {
                   FutureBuilder(
                       future: Loading(),
                       builder: (BuildContext context, AsyncSnapshot snapshot) {
-                        log.d(snapshot.data);
+                        //logger.d(snapshot.data);
                         if (snapshot.hasData && !snapshot.data.isEmpty) {
                           _getTrash = snapshot.data['getTrash?'];
-                          return widgetContainerForReservation();
+                          if (_getTrash) {
+                            return widgetViewForCollect();
+                          } else {
+                            return widgetViewForDeliver();
+                          }
                         } else if (snapshot.hasError) {
                           return Padding(
                             padding: const EdgeInsets.all(8.0),
@@ -272,30 +354,13 @@ class SignedInPageState extends State<SignedInPage> {
                             ),
                           );
                         } else {
-                          return widgetLoading();
+                          return Container(
+                            height: grid_height * 3,
+                            child: widgetLoading(),
+                          );
                         }
                       }),
-                  SizedBox(
-                    height: grid_height / 6,
-                  ),
-                  MaterialButton(
-                    onPressed: () =>
-                        reservationBtn(),
-                    color: COLOR_SSDAM,
-                    textColor: Colors.white,
-                    minWidth: grid_height * 3.7,
-                    height: grid_height * 3.7,
-                    child: Image.asset(
-                      'assets/icon/${_icon_button}',
-                      width: grid_height * 2.7,
-                      height: grid_height * 2.7,
-                      fit: BoxFit.fill,
-                    ),
-                    padding: EdgeInsets.all(16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.0),
-                    ),
-                  )
+
                 ]),
               ))
         ],
@@ -303,292 +368,466 @@ class SignedInPageState extends State<SignedInPage> {
     );
   }
 
+  Widget widgetViewForCollect() {
+    return Column(
+      children: [
+        widgetContainerForReservation(),
+        SizedBox(
+          height: grid_height / 6,
+        ),
+        MaterialButton(
+          onPressed: () {
+            logger.d(button_pressed);
+            reservationBtn_collect();
+          },
+          color: COLOR_SSDAM,
+          textColor: Colors.white,
+          minWidth: grid_height * 3.7,
+          height: grid_height * 3.7,
+          child: Image.asset(
+            'assets/icon/${_icon_button}',
+            width: grid_height * 2.7,
+            height: grid_height * 2.7,
+            fit: BoxFit.fill,
+          ),
+          padding: EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget widgetViewForDeliver() {
+    return Column(
+      children: [
+        widgetContainerForReservation(),
+        SizedBox(
+          height: grid_height / 6,
+        ),
+        SizedBox(
+            width: double.infinity,
+            child: RaisedButton(
+                color: COLOR_SSDAM,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(5.0),
+                ),
+                onPressed: () => reservationBtn_deliver(),
+                child: Padding(
+                    padding: const EdgeInsets.fromLTRB(0.0, 8.0, 8.0, 8.0),
+                    child: Column(
+                      children: [
+                        Text('\n쓰담 박스 받기',
+                          style: TextStyle(color: Colors.white, fontSize: 18),),
+                        Text('\n(20L와 2L 용량의 박스가 배송됩니다.)\n',
+                          style: TextStyle(color: Colors.white, fontSize: 15),),
+                      ],
+                    )
+                )
+            )
+        )
+      ],
+    );
+  }
+
   Widget widgetContainerForReservation() {
     return Container(
         child: Column(
-      children: <Widget>[
-        ReservationButton(
-          text: reservationInfo.getAddress().length != 0
-              ? '${reservationInfo.getAddress()} ${reservationInfo.getDetailedAddress()}'
-              : '어디로 가져다 드릴까요?',
-          onPressed: () async {
-            KopoModel model = await Navigator.push(
-              context,
-              CupertinoPageRoute(builder: (context) => Kopo()),
-            );
-            //print(model.toJson());
-            if (model != null) {
-              if (model.address.toString().indexOf('광진구') == -1) {
-                await PopupBox.showPopupBox(
-                    context: context,
-                    button: MaterialButton(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      color: Colors.blue,
-                      child: Text(
-                        'Ok',
-                        style: TextStyle(fontSize: 20),
-                      ),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                    willDisplayWidget: Column(
-                      children: <Widget>[
-                        Text(
-                          '죄송합니다.\n현재 서비스는 광진구에서만 진행하고 있습니다.',
-                          style: TextStyle(fontSize: 16, color: Colors.black),
+          children: <Widget>[
+            ReservationButton(
+              text: reservationInfo
+                  .getAddress()
+                  .length != 0
+                  ? '${reservationInfo.getAddress()} ${reservationInfo
+                  .getDetailedAddress()}'
+                  : '어디로 가져다 드릴까요?',
+              onPressed: () async {
+                KopoModel model = await Navigator.push(
+                  context,
+                  CupertinoPageRoute(builder: (context) => Kopo()),
+                );
+                //print(model.toJson());
+                if (model != null) {
+                  if (model.address.toString().indexOf('광진구') == -1) {
+                    await PopupBox.showPopupBox(
+                        context: context,
+                        button: MaterialButton(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          color: Colors.blue,
+                          child: Text(
+                            'Ok',
+                            style: TextStyle(fontSize: 20),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
                         ),
-                      ],
-                    ));
-              }
-              else {
-                setState(() {
-                  reservationInfo.setAddress('${model.address}');
-                });
-                log.d("show?");
-                await PopupBox.showPopupBox(
-                    context: context,
-                    button: MaterialButton(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      color: Colors.blue,
-                      child: Text(
-                        'Ok',
-                        style: TextStyle(fontSize: 20),
-                      ),
-                      onPressed: () {
-                        reservationInfo
-                            .setDetailedAddress(detailAddressCont.text.trim());
-                        Navigator.of(context).pop();
-                        setRememberAddr(
-                            reservationInfo.getAddress(),
-                            detailAddressCont.text);
-                      },
-                    ),
-                    willDisplayWidget: Column(
-                      children: <Widget>[
-                        Text(
-                          '상세주소를 입력해주세요.\n(상세주소가 없을 경우 생략)',
-                          style: TextStyle(fontSize: 16, color: Colors.black),
-                        ),
-                        TextField(
-                          controller: detailAddressCont,
-                        )
-                      ],
-                    ));
-              }
-            }
-          },
-        ), // input address
-        ReservationButton(
-            text: DateFormat('yyyy년 MM월 dd일 kk시 mm분').format(
-              //reservationInfo.getReservationTime() ??
-                _reservation_time),
-            onPressed: () {
-              print('pressed time button');
-              DateTime initial_date = DateTime.now();
-              switch (initial_date.weekday) {
-                case 7:
-                  initial_date.add(Duration(days: 1));
-                  break;
-                case 6:
-                  initial_date.add(Duration(days: 2));
-                  break;
-                default:
-                  break;
-              }
-              showDatePicker(
-                context: context,
-                initialDate: _reservation_time,
-                firstDate: initial_date,
-                lastDate: initial_date.add(Duration(days: 30)),
-                selectableDayPredicate: (DateTime val) =>
-                    val.weekday == 7 || val.weekday == 6 ? false : true,
-              ).then((date) {
-                setState(() {
-                  if (date != null) {
-                    _reservation_time = DateTime(
-                        date.year, date.month, date.day, _reservation_time.hour,
-                        _reservation_time.minute);
+                        willDisplayWidget: Column(
+                          children: <Widget>[
+                            Text(
+                              '죄송합니다.\n현재 서비스는 광진구에서만 진행하고 있습니다.',
+                              style: TextStyle(fontSize: 16, color: Colors.black),
+                            ),
+                          ],
+                        ));
                   }
-                  reservationInfo.setReservationTime(_reservation_time);
-
-                  DateTime t = DateTime.now().add(Duration(hours: 1));
-                  showTimePicker(
-                    context: context,
-                    initialTime: TimeOfDay(
-                      hour: t.hour,
-                      minute: t.minute,
-                    ),
-                  ).then((time) {
+                  else {
                     setState(() {
-                      if (time != null) {
-                        log.d(time.hour.toString());
-                        if ((time.hour >= 9 && time.hour < 13) ||
-                            (time.hour >= 18 && time.hour < 20)) {
-                          log.d(DateTime
-                              .now()
-                              .hour);
-                          DateTime tmp = _reservation_time;
-                          if (DateTime(tmp.year,
-                              tmp.month, tmp.day, time.hour,
-                              time.minute).compareTo(DateTime.now()) > 0) {
-                            reservationInfo.setReservationTime(
-                                DateTime(tmp.year,
-                                    tmp.month, tmp.day, time.hour,
-                                    time.minute));
-                            _reservation_time =
-                                reservationInfo.getReservationTime();
-                            log.d('${reservationInfo
-                                .getReservationTime()} ${_reservation_time}');
-                          }
-                          return;
-                        }
-                        else {
-                          PopupBox.showPopupBox(
-                              context: context,
-                              button: MaterialButton(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                color: Colors.blue,
-                                child: Text(
-                                  'Ok',
-                                  style: TextStyle(fontSize: 20),
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    this.setReservationTime();
-                                    print(_reservation_time);
-                                  });
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                              willDisplayWidget: Column(
-                                children: <Widget>[
-                                  Text(
-                                    '예약 가능 시간이 아닙니다.\n 예약 가능 시간은 \n09:00 ~ 12:59,\n18:00 ~ 19:59입니다.',
-                                    style: TextStyle(
-                                        fontSize: 16, color: Colors.black),
-                                  ),
-                                ],
-                              ));
-                        }
-                      }
-                      reservationInfo.setReservationTime(_reservation_time);
-                      print('reservationTime: ${reservationInfo
-                          .getReservationTime()}');
+                      reservationInfo.setAddress('${model.address}');
+                    });
+                    await PopupBox.showPopupBox(
+                        context: context,
+                        button: MaterialButton(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          color: Colors.blue,
+                          child: Text(
+                            'Ok',
+                            style: TextStyle(fontSize: 20),
+                          ),
+                          onPressed: () {
+                            reservationInfo
+                                .setDetailedAddress(detailAddressCont.text.trim());
+                            Navigator.of(context).pop();
+                            setRememberAddr(
+                                reservationInfo.getAddress(),
+                                detailAddressCont.text);
+                          },
+                        ),
+                        willDisplayWidget: Column(
+                          children: <Widget>[
+                            Text(
+                              '상세주소를 입력해주세요.\n(상세주소가 없을 경우 생략)',
+                              style: TextStyle(fontSize: 16, color: Colors.black),
+                            ),
+                            TextField(
+                              controller: detailAddressCont,
+                            )
+                          ],
+                        ));
+                  }
+                }
+              },
+            ), // input address
+            ReservationButton(
+                text: '${DateFormat('yyyy/MM/dd').format(
+                  //reservationInfo.getReservationTime() ??
+                    _reservation_time)}, ${time_zone}',
+                onPressed: () async {
+                  print('pressed time button');
+                  DateTime initial_date = await NTP.now();
+                  switch (initial_date.weekday) {
+                    case 7:
+                      initial_date.add(Duration(days: 1));
+                      break;
+                    case 6:
+                      initial_date.add(Duration(days: 2));
+                      break;
+                    default:
+                      break;
+                  }
+                  showDatePicker(
+                    context: context,
+                    initialDate: _reservation_time,
+                    firstDate: initial_date,
+                    lastDate: initial_date.add(Duration(days: 30)),
+                    selectableDayPredicate: (DateTime val) =>
+                    val.weekday == 7 || val.weekday == 6 ? false : true,
+                  ).then((date) async {
+                    if (date != null) {
+                      _reservation_time = DateTime(
+                          date.year, date.month, date.day,
+                          _reservation_time.hour,
+                          _reservation_time.minute);
                     }
-                    );
+                    setState(() {
+                      reservationInfo.setReservationTime(_reservation_time);
+                    });
+                    DateTime t = initial_date.add(Duration(hours: 1));
+                    // showTimePicker(
+                    //   context: context,
+                    //   initialTime: TimeOfDay(
+                    //     hour: t.hour,
+                    //     minute: t.minute,
+                    //   ),
+                    // ).then((time) async {
+                    //   logger.d(time);
+                    //     if (time != null) {
+                    //       if ((time.hour >= 9 && time.hour < 13) ||
+                    //           (time.hour >= 18 && time.hour < 20)) {
+                    //         DateTime tmp = _reservation_time;
+                    //         if (DateTime(tmp.year,
+                    //             tmp.month, tmp.day, time.hour,
+                    //             time.minute).difference(initial_date) > Duration(minutes: 59)) {
+                    //           setState(() {
+                    //             reservationInfo.setReservationTime(
+                    //                 DateTime(tmp.year,
+                    //                     tmp.month, tmp.day, time.hour,
+                    //                     time.minute));
+                    //             _reservation_time =
+                    //                 reservationInfo.getReservationTime();
+                    //           });
+                    //         }
+                    //         else{
+                    //           await PopupBox.showPopupBox(
+                    //               context: context,
+                    //               button: MaterialButton(
+                    //                 shape: RoundedRectangleBorder(
+                    //                   borderRadius: BorderRadius.circular(20),
+                    //                 ),
+                    //                 color: Colors.blue,
+                    //                 child: Text(
+                    //                   'Ok',
+                    //                   style: TextStyle(fontSize: 20),
+                    //                 ),
+                    //                 onPressed: () async {
+                    //                   // setState(() {
+                    //                   //   this.setReservationTime();
+                    //                   //   print(_reservation_time);
+                    //                   // });
+                    //                   await setReservationTime();
+                    //                   Navigator.of(context).pop();
+                    //                 },
+                    //               ),
+                    //               willDisplayWidget: Column(
+                    //                 children: <Widget>[
+                    //                   Text(
+                    //                     '예약 가능 시간이 아닙니다.\n 예약 시간은 1시간 이후로 해주십시오.',
+                    //                     style: TextStyle(
+                    //                         fontSize: 16, color: Colors.black),
+                    //                   ),
+                    //                 ],
+                    //               ));
+                    //         }
+                    //         return;
+                    //       }
+                    //       else {
+                    //         await PopupBox.showPopupBox(
+                    //             context: context,
+                    //             button: MaterialButton(
+                    //               shape: RoundedRectangleBorder(
+                    //                 borderRadius: BorderRadius.circular(20),
+                    //               ),
+                    //               color: Colors.blue,
+                    //               child: Text(
+                    //                 'Ok',
+                    //                 style: TextStyle(fontSize: 20),
+                    //               ),
+                    //               onPressed: () async {
+                    //                 // setState(() {
+                    //                 //   this.setReservationTime();
+                    //                 //   print(_reservation_time);
+                    //                 // });
+                    //                 await setReservationTime();
+                    //                 Navigator.of(context).pop();
+                    //               },
+                    //             ),
+                    //             willDisplayWidget: Column(
+                    //               children: <Widget>[
+                    //                 Text(
+                    //                   '예약 가능 시간이 아닙니다.\n 예약 가능 시간은 \n09:00 ~ 12:59,\n18:00 ~ 19:59입니다.',
+                    //                   style: TextStyle(
+                    //                       fontSize: 16, color: Colors.black),
+                    //                 ),
+                    //               ],
+                    //             ));
+                    //       }
+                    //     }
+                    //     reservationInfo.setReservationTime(_reservation_time);
+                    //     print('reservationTime: ${reservationInfo
+                    //         .getReservationTime()}');
+                    //   }
+                    //   );
+                    logger.d('pop up..?');
+                    await PopupBox.showPopupBox(
+                        context: context,
+                        button: MaterialButton(),
+                        willDisplayWidget: Column(
+                          children: <Widget>[
+                            Text(
+                              '수거 시간대를 선택해주십시오.',
+                              style: TextStyle(fontSize: 16,
+                                  color: Colors.black),
+                            ),
+                            SizedBox(height: 20,),
+                            DropdownButton(
+                              value: time_zone,
+                              items: [
+                                DropdownMenuItem(
+                                  child: Text('오전'),
+                                  value: '오전',
+                                ),
+                                DropdownMenuItem(
+                                  child: Text('오후'),
+                                  value: '오후',
+                                ),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  time_zone = value;
+                                  if (time_zone == '오전') {
+                                    reservationInfo.setReservationTime(
+                                        DateTime(_reservation_time.year,
+                                            _reservation_time.month,
+                                            _reservation_time.day, 12,
+                                            0));
+                                    _reservation_time =
+                                        reservationInfo.getReservationTime();
+                                  }
+                                  else {
+                                    reservationInfo.setReservationTime(
+                                        DateTime(_reservation_time.year,
+                                            _reservation_time.month,
+                                            _reservation_time.day, 20,
+                                            0));
+                                    _reservation_time =
+                                        reservationInfo.getReservationTime();
+                                  }
+                                });
+                                Navigator.of(context).pop();
+                              },
+                            )
+                          ],
+                        ));
                   });
-                });
-              });
 
-              // TimePickerSpinner(
-              //     is24HourMode: true,
-              //     onTimeChange: (time) {
-              //       setState(() {
-              //         _date_time = _date_time.add(
-              //             Duration(hours: time.hour, minutes: time.minute));
-              //       });
-              //     });
-              log.d("예약 요청 시각 : ${reservationInfo.getReservationTime()}");
-            }),
+                  // TimePickerSpinner(
+                  //     is24HourMode: true,
+                  //     onTimeChange: (time) {
+                  //       setState(() {
+                  //         _date_time = _date_time.add(
+                  //             Duration(hours: time.hour, minutes: time.minute));
+                  //       });
+                  //     });
+                }),
 
-        ReservationButton(
-            text: reservationInfo.getCustomerRequests().length != 0
-                ? '${reservationInfo.getCustomerRequests()}'
-                : '현관 비밀번호가 있으신가요?',
-            onPressed: () async {
-              await PopupBox.showPopupBox(
-                  context: context,
-                  button: MaterialButton(
-                    minWidth: grid_width * 5,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    color: COLOR_SSDAM,
-                    child: Text(
-                      'Ok',
-                      style: TextStyle(color: Colors.white, fontSize: 20),
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        reservationInfo.setCustomerRequests(
-                            customerRequestCont.text.trim());
-                        setRememberRequests(
-                            reservationInfo.getCustomerRequests());
-                      });
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                  willDisplayWidget: Column(
-                    children: <Widget>[
-                      Text(
-                        '요청 사항을 입력해주세요.\n(현관 비밀번호 등)',
-                        style: TextStyle(fontSize: 16, color: Colors.black),
+            ReservationButton(
+                text: reservationInfo.getCustomerRequests().length != 0
+                    ? '${reservationInfo.getCustomerRequests()}'
+                    : '현관 비밀번호가 있으신가요?',
+                onPressed: () async {
+                  await PopupBox.showPopupBox(
+                      context: context,
+                      button: MaterialButton(
+                        minWidth: grid_width * 5,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        color: COLOR_SSDAM,
+                        child: Text(
+                          'Ok',
+                          style: TextStyle(color: Colors.white, fontSize: 20),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            reservationInfo.setCustomerRequests(
+                                customerRequestCont.text.trim());
+                            setRememberRequests(
+                                reservationInfo.getCustomerRequests());
+                          });
+                          Navigator.of(context).pop();
+                        },
                       ),
-                      TextField(
-                        controller: customerRequestCont,
-                      )
-                    ],
-                  ));
-            }),
-      ],
-    ));
+                      willDisplayWidget: Column(
+                        children: <Widget>[
+                          Text(
+                            '요청 사항을 입력해주세요.\n(현관 비밀번호 등)',
+                            style: TextStyle(fontSize: 16, color: Colors.black),
+                          ),
+                          TextField(
+                            controller: customerRequestCont,
+                          )
+                        ],
+                      ));
+                }),
+          ],
+        ));
   }
 
-  Future<Widget> reservationBtn() async {
+  Future<Widget> reservationBtn_collect() async {
+    _now = await NTP.now();
     reservationInfo.setCustomerRequests(customerRequestCont.text.trim());
     setRememberRequests(reservationInfo.getCustomerRequests());
-    reservationInfo.setApplicationTime(DateTime.now());
-    if (fp.getUserInfo()["getTrash?"]) {
-      if (fp.getUserInfo()['tickets'] + fp.getUserInfo()['p_ticket'] > 0) {
-        if (reservationInfo.getAddress().length > 0) {
-          return PopupBox.showPopupBox(
-            context: context,
-            button: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                MaterialButton(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  color: COLOR_SSDAM,
-                  child: Text(
-                    '취소',
-                    style: TextStyle(color: Colors.white, fontSize: 20),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
+    reservationInfo.setApplicationTime(_now);
+    if (fp.getUserInfo()['tickets'] + fp.getUserInfo()['p_tickets'] +
+        fp.getUserInfo()['r_tickets'] > 0) {
+      if (reservationInfo
+          .getAddress()
+          .length > 0 && reservationInfo.getReservationTime().difference(_now) >
+          Duration(minutes: 59)) {
+        return await PopupBox.showPopupBox(
+          context: context,
+          button: !button_pressed ? Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              MaterialButton(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                SizedBox(width: 10),
-                MaterialButton(
-                  //minWidth: grid_width * 5,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    ),
-                    color: COLOR_SSDAM,
-                    child: Text(
-                      '확인',
-                      style: TextStyle(color: Colors.white, fontSize: 20),
-                    ),
-                    onPressed: () async {
-                      // setState(() {
-                      //   _tickets -= 1;
-                      // });
-                      if (fp.getUserInfo()['p_ticket'] > 0) {
+                color: COLOR_SSDAM,
+                child: Text(
+                  '취소',
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                ),
+                onPressed: () {
+                  if (!button_pressed) {
+                    Navigator.pop(context);
+                    setState(() {
+                      button_pressed = false;
+                    });
+                  }
+                },
+              ),
+              SizedBox(width: 10),
+              MaterialButton(
+                //minWidth: grid_width * 5,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                color: COLOR_SSDAM,
+                child: Text(
+                  '확인',
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                ),
+                onPressed: () async {
+                  // setState(() {
+                  //   _tickets -= 1;
+                  // });
+                  logger.d(button_pressed);
+                  if (!button_pressed) {
+                    setState(() {
+                      button_pressed = true;
+                    });
+                    reservationInfo.setName(fp.getUserInfo()['name']);
+                    logger.d('button pressed');
+                    bool reservation_result = await reservationInfo
+                        .saveReservationInfo("collect", context);
+                    // setState(() async {
+                    //   await Loading();
+                    // });
+                    if (reservation_result) {
+                      if (fp.getUserInfo()['r_tickets'] > 0) {
                         Firestore.instance
                             .collection('userInfo')
                             .document(fp
                             .getUser()
                             .uid)
                             .updateData(
-                            {"p_ticket": fp.getUserInfo()['p_ticket'] - 1});
+                            {"r_tickets": fp.getUserInfo()['r_tickets'] - 1});
+                        reservationInfo.setPromotion(false);
+                      }
+                      else if (fp.getUserInfo()['p_tickets'] > 0) {
+                        Firestore.instance
+                            .collection('userInfo')
+                            .document(fp
+                            .getUser()
+                            .uid)
+                            .updateData(
+                            {"p_tickets": fp.getUserInfo()['p_tickets'] - 1});
                         reservationInfo.setPromotion(true);
                       }
                       else {
@@ -601,20 +840,13 @@ class SignedInPageState extends State<SignedInPage> {
                             {"tickets": fp.getUserInfo()['tickets'] - 1});
                         reservationInfo.setPromotion(false);
                       }
-                      reservationInfo.setName(fp.getUserInfo()['name']);
-                      await reservationInfo.saveReservationInfo("collect");
-                      // setState(() async {
-                      //   await Loading();
-                      // });
                       _showNotificationAtTime((reservationInfo
                           .getApplicationTime()
                           .millisecondsSinceEpoch
                           - DateTime(
-                              DateTime
-                                  .now()
+                              _now
                                   .year,
-                              DateTime
-                                  .now()
+                              _now
                                   .month,
                               1,
                               0,
@@ -623,9 +855,13 @@ class SignedInPageState extends State<SignedInPage> {
                               0).millisecondsSinceEpoch),
                           reservationInfo.getReservationTime(),
                           Duration(minutes: 30));
+                      fp.setUserInfo_notify();
                       Navigator.pop(context);
                       print('예약 완료');
-                      return PopupBox.showPopupBox(
+                      setState(() {
+                        button_pressed = false;
+                      });
+                      return await PopupBox.showPopupBox(
                         context: context,
                         button: MaterialButton(
                           onPressed: () {
@@ -635,53 +871,40 @@ class SignedInPageState extends State<SignedInPage> {
                         willDisplayWidget: Center(
                             child: Text(
                               '${fp.getUserInfo()['name']}님\n'
-                                  '${reservationInfo.getReservationTime()}\n'
+                                  '${DateFormat('yyyy년 MM월 dd일').format(
+                                  _reservation_time)}, ${time_zone}\n'
                               //'${reservationInfo.getAddress()} ${reservationInfo.getDetailedAddress()}\n'
                                   '예약이 완료되었습니다.',
                               style: TextStyle(
                                   fontSize: 16, color: Colors.black),
                             )),
                       );
-                    },
-                  ),
-                ],
-              ),
-            willDisplayWidget: Center(
-                child: Text(
-                  '${fp.getUserInfo()['name']}님\n'
-                      '${reservationInfo.getReservationTime()}\n'
-                      '${reservationInfo.getAddress()} ${reservationInfo
-                      .getDetailedAddress()}\n'
-                      '쓰레기통 수거 예약 하시겠습니까?',
-                  style: TextStyle(fontSize: 16, color: Colors.black),
-                )),
-          );
-        }
-        else {
-          return PopupBox.showPopupBox(
-              context: context,
-              button: MaterialButton(
-                minWidth: grid_width * 5,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                color: COLOR_SSDAM,
-                child: Text(
-                  'Ok',
-                  style: TextStyle(color: Colors.white, fontSize: 20),
-                ),
-                onPressed: () {
-                  Navigator.pop(context);
+                    }
+                    else {
+                      setState(() {
+                        button_pressed = false;
+                      });
+                      Navigator.pop(context);
+                    }
+                  }
                 },
               ),
-              willDisplayWidget: Center(
-                  child: Text(
-                    '주소를 입력해주시기 바랍니다.',
-                    style: TextStyle(fontSize: 16, color: Colors.black),
-                  )));
-        }
-      } else {
-        return PopupBox.showPopupBox(
+            ],
+          ) : Container(),
+          willDisplayWidget: Center(
+              child: Text(
+                '${fp.getUserInfo()['name']}님\n'
+                    '${DateFormat('yyyy년 MM월 dd일').format(
+                    _reservation_time)}, ${time_zone}\n'
+                    '${reservationInfo.getAddress()} ${reservationInfo
+                    .getDetailedAddress()}\n'
+                    '쓰레기 수거 예약 하시겠습니까?',
+                style: TextStyle(fontSize: 16, color: Colors.black),
+              )),
+        );
+      }
+      else {
+        return await PopupBox.showPopupBox(
             context: context,
             button: MaterialButton(
               minWidth: grid_width * 5,
@@ -699,43 +922,161 @@ class SignedInPageState extends State<SignedInPage> {
             ),
             willDisplayWidget: Center(
                 child: Text(
-                  '잔여 이용권이 없습니다.',
+                  '주소 또는 예약 시간을 확인해주세요.',
                   style: TextStyle(fontSize: 16, color: Colors.black),
                 )));
       }
-    } else {
-      await reservationInfo.saveReservationInfo("deliver");
-      setState(() {
-        _getTrash = true;
-        _icon_button = "open_trash.png";
-      });
-      Firestore.instance
-          .collection('userInfo')
-          .document(fp
-          .getUser()
-          .uid)
-          .updateData({"getTrash?": _getTrash});
-      reservationInfo.setName(fp.getUserInfo()['name']);
-      log.d('save to firestore');
-      return PopupBox.showPopupBox(
+    }
+    else {
+      return await PopupBox.showPopupBox(
           context: context,
           button: MaterialButton(
+            minWidth: grid_width * 5,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
-            color: Colors.blue,
+            color: COLOR_SSDAM,
+            child: Text(
+              'Ok',
+              style: TextStyle(color: Colors.white, fontSize: 20),
+            ),
             onPressed: () {
-              {
-                Navigator.pop(context);
-              }
+              Navigator.pop(context);
             },
           ),
-          willDisplayWidget: new Center(
+          willDisplayWidget: Center(
               child: Text(
-                '${fp
-                    .getUser()
-                    .displayName}님\n${reservationInfo
-                    .getReservationTime()}\n 쓰레기통 배송 예약이 완료되었습니다.',
+                '잔여 이용권이 없습니다.',
+                style: TextStyle(fontSize: 16, color: Colors.black),
+              )));
+    }
+  }
+
+  Future<Widget> reservationBtn_deliver() async {
+    _now = await NTP.now();
+    reservationInfo.setCustomerRequests(customerRequestCont.text.trim());
+    setRememberRequests(reservationInfo.getCustomerRequests());
+    reservationInfo.setApplicationTime(_now);
+    if (reservationInfo
+        .getAddress()
+        .length > 0 && reservationInfo.getReservationTime().difference(_now) >
+        Duration(minutes: 59)) {
+      return await PopupBox.showPopupBox(
+        context: context,
+        button: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            MaterialButton(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              color: COLOR_SSDAM,
+              child: Text(
+                '취소',
+                style: TextStyle(color: Colors.white, fontSize: 20),
+              ),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            SizedBox(width: 10),
+            MaterialButton(
+              //minWidth: grid_width * 5,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              color: COLOR_SSDAM,
+              child: Text(
+                '확인',
+                style: TextStyle(color: Colors.white, fontSize: 20),
+              ),
+              onPressed: () async {
+                logger.d(button_pressed);
+                if (!button_pressed) {
+                  setState(() {
+                    button_pressed = true;
+                  });
+                  reservationInfo.setName(fp.getUserInfo()['name']);
+                  bool reservation_result = await reservationInfo
+                      .saveReservationInfo("deliver", context);
+                  logger.d('why?');
+                  if (reservation_result) {
+                    setState(() {
+                      _getTrash = true;
+                      _icon_button = "open_trash.png";
+                    });
+                    Firestore.instance
+                        .collection('userInfo')
+                        .document(fp
+                        .getUser()
+                        .uid)
+                        .updateData({"getTrash?": _getTrash});
+                    fp.setUserInfo_notify();
+                    Navigator.pop(context);
+                  }
+                  print('예약 완료');
+                  setState(() {
+                    button_pressed = false;
+                  });
+                  return await PopupBox.showPopupBox(
+                      context: context,
+                      button: MaterialButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                      ),
+                      willDisplayWidget: new Center(
+                          child: Text(
+                            '${fp
+                                .getUser()
+                                .displayName}님\n${DateFormat('yyyy년 MM월 dd일')
+                                .format(
+                                _reservation_time)}, ${time_zone}\n 쓰레기통 배송 예약이 완료되었습니다.',
+                            style: TextStyle(fontSize: 16, color: Colors.black),
+                          )));
+                }
+                else {
+                  setState(() {
+                    button_pressed = false;
+                  });
+                  Navigator.pop(context);
+                }
+              },
+            ),
+          ],
+        ),
+        willDisplayWidget: Center(
+            child: Text(
+              '${fp.getUserInfo()['name']}님\n'
+                  '${DateFormat('yyyy년 MM월 dd일').format(
+                  _reservation_time)}, ${time_zone}\n'
+                  '${reservationInfo.getAddress()} ${reservationInfo
+                  .getDetailedAddress()}\n'
+                  '쓰레기통 배송 예약 하시겠습니까?',
+              style: TextStyle(fontSize: 16, color: Colors.black),
+            )),
+      );
+    }
+    else {
+      return await PopupBox.showPopupBox(
+          context: context,
+          button: MaterialButton(
+            minWidth: grid_width * 5,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            color: COLOR_SSDAM,
+            child: Text(
+              'Ok',
+              style: TextStyle(color: Colors.white, fontSize: 20),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+          willDisplayWidget: Center(
+              child: Text(
+                '주소 또는 예약 시간을 확인해주세요.',
                 style: TextStyle(fontSize: 16, color: Colors.black),
               )));
     }
@@ -773,7 +1114,7 @@ class SignedInPageState extends State<SignedInPage> {
         priority: Priority.High);
 
     var iosPlatformChannelSpecifics =
-        IOSNotificationDetails(sound: 'slow_spring.board.aiff');
+    IOSNotificationDetails(sound: 'slow_spring.board.aiff');
     var platformChannelSpecifics = NotificationDetails(
         androidPlatformChannelSpecifics, iosPlatformChannelSpecifics);
 
@@ -785,7 +1126,6 @@ class SignedInPageState extends State<SignedInPage> {
       platformChannelSpecifics,
       payload: '혹시 쓰레기통을 내놓지 않으셨다면 잊지 말고 내놓아 주시기 바랍니다!',
     );
-    log.d('노티 등록 완료');
   }
 
   Future _showNotificationRepeat() async {

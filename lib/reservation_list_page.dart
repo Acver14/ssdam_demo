@@ -10,7 +10,11 @@ import 'package:popup_box/popup_box.dart';
 import 'package:ssdam_demo/signedin_page.dart';
 import 'package:ssdam_demo/style/customColor.dart';
 import 'package:logger/logger.dart';
+import 'package:ntp/ntp.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:ssdam_demo/customClass/size_constant.dart';
+import 'customClass/server_host.dart';
 
 ReservationListPageState pageState;
 
@@ -58,7 +62,7 @@ class ReservationListPageState extends State<ReservationListPage> {
   }
 
   Future<QuerySnapshot> Loading() async {
-    await fp.setUserInfo();
+    if (fp.getUserInfo() == null) await fp.setUserInfo();
     return reservation_infos = await Firestore.instance
         .collection('reservationList')
         .document(fp.getUser().uid)
@@ -89,7 +93,7 @@ class ReservationListPageState extends State<ReservationListPage> {
             } else {
               if (snapshot.data.documents.length > 0) {
                 getReservationList(snapshot);
-                print('length:${snapshot.data.documents.length}');
+                //print('length:${snapshot.data.documents.length}');
                 return new Scrollbar(
                     isAlwaysShown: true,
                     controller: _infiniteController,
@@ -116,7 +120,8 @@ class ReservationListPageState extends State<ReservationListPage> {
     reservationList = snapshot.data.documents.map((doc) {
       var type;
       var state;
-      var reservationID = doc['applicationTime'].toString();
+      var reservationID = doc.documentID;
+      //logger.d(reservationID);
       if (doc["type"].toString() == 'deliver') {
         type = "쓰레기통 배송";
       } else {
@@ -125,34 +130,37 @@ class ReservationListPageState extends State<ReservationListPage> {
       if (doc["state"].toString() == 'register') {
         state = '접수';
       }
-      else if (doc["state"].toString() == 'cancel') {
+      if (doc["state"].toString() == 'processing') {
+        state = '처리 중';
+      } else if (doc["state"].toString() == 'cancel') {
         state = '취소';
-      }
-      else if (doc["state"].toString() == 'complete') {
+      } else if (doc["state"].toString() == 'complete') {
         state = '완료';
       }
+      logger.d(doc["reservationTime"].toDate());
       return new Card(
           child: ListTile(
-            title: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                new Text(type),
-                doc['state'] != 'cancel' ? new IconButton(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            new Text(type),
+            doc['state'] == 'register'
+                ? new IconButton(
                     icon: new Icon(Icons.delete),
                     onPressed: () async {
                       //print(Timestamp.now().toDate().difference((doc["reservationTime"]).toDate()).inHours);
-                      PopupBox.showPopupBox(
+                      await PopupBox.showPopupBox(
                         context: context,
                         button: Row(
                           children: [
                             MaterialButton(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
-                            ),
-                            color: COLOR_SSDAM,
-                            child: Text(
-                              '취소',
-                              style: TextStyle(
+                              ),
+                              color: COLOR_SSDAM,
+                              child: Text(
+                                '취소',
+                                style: TextStyle(
                                   color: Colors.white, fontSize: 20),
                             ),
                             onPressed: () {
@@ -183,19 +191,42 @@ class ReservationListPageState extends State<ReservationListPage> {
                                   .collection('registerReservationList')
                                   .document(doc['_id'])
                                   .delete();
-                              if ((doc["reservationTime"])
-                                  .toDate()
-                                  .difference(Timestamp.now().toDate())
-                                  .inHours > 3) {
-                                await Firestore.instance
-                                    .collection('userInfo')
+                              var _now = await NTP.now();
+                              var tomorrow = new DateTime(
+                                  _now.year, _now.month, _now.day + 1);
+                              logger.d(doc['reservationTime'].toDate().isAfter(
+                                  _now));
+                              logger.d(doc['reservationTime'].toDate().isBefore(
+                                  tomorrow));
+                              // if(doc['reservationTime'].toDate().isAfter(_now) && doc['reservationTime'].toDate().isBefore(tomorrow)){
+                              //   final response = await http.post(rider_batch_server_delete,
+                              //       body: json.encode(<String, String>{
+                              //         "id": doc['_id']
+                              //       }));
+                              //   logger.d(response);
+                              // }  라이더 배치 플랫폼 주석 처리 ( 임시 )
+                              if (doc['type'] == 'deliver') {
+                                await Firestore.instance.collection('userInfo')
                                     .document(fp
                                     .getUser()
                                     .uid)
-                                    .updateData({
-                                  "tickets": fp.getUserInfo()['tickets'] + 1
-                                });
-                                setState(() {});
+                                    .updateData({'getTrash?': false});
+                              }
+                              else {
+                                if ((doc["reservationTime"])
+                                    .toDate()
+                                    .difference(Timestamp.now().toDate())
+                                    .inHours > 3) {
+                                  await Firestore.instance
+                                      .collection('userInfo')
+                                      .document(fp
+                                      .getUser()
+                                      .uid)
+                                      .updateData({
+                                    "tickets": fp.getUserInfo()['tickets'] + 1
+                                  });
+                                  setState(() {});
+                                }
                               }
                               print('예약 삭제 성공');
                               setState(() {
@@ -220,7 +251,7 @@ class ReservationListPageState extends State<ReservationListPage> {
                                 context: context,
                                 button: MaterialButton(
                                   onPressed: () {
-                                    (context as Element).reassemble();
+                                    fp.setUserInfo_notify();
                                     Navigator.pop(context);
                                   },
                                 ),
@@ -236,16 +267,24 @@ class ReservationListPageState extends State<ReservationListPage> {
                               );
                             },
                           ),
-                        ],
+                          ],
                         ),
                         willDisplayWidget: Center(
-                            child: Text(
+                            child: doc['type'] == 'collect' ?
+                            Text(
                               '${fp.getUserInfo()['name']}님\n'
-                          '${doc["reservationTime"].toDate()}\n'
-                          '예약 취소하시겠습니까?\n'
-                          '(3시간 전 예약 취소는 이용권 반환이 불가합니다.)',
-                          style: TextStyle(fontSize: 16, color: Colors.black),
-                        )),
+                                  '${doc["reservationTime"].toDate()}\n'
+                                  '예약 취소하시겠습니까?\n'
+                                  '(3시간 전 예약 취소는 이용권 반환이 불가합니다.)',
+                              style: TextStyle(
+                                  fontSize: 16, color: Colors.black),
+                            ) : Text(
+                              '${fp.getUserInfo()['name']}님\n'
+                                  '${doc["reservationTime"].toDate()}\n'
+                                  '예약 취소하시겠습니까?\n',
+                              style: TextStyle(
+                                  fontSize: 16, color: Colors.black),
+                            )),
                       );
                     }) : new IconButton(icon: new Icon(Icons.delete),
                   onPressed: () {},
@@ -256,8 +295,12 @@ class ReservationListPageState extends State<ReservationListPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 new Text(
-                    '예약 시간 : ${_date_format.format(
-                        doc["reservationTime"].toDate())}'),
+                    '예약 시간 : ${DateFormat('yyyy년 MM월 dd일').format(
+                        doc['reservationTime']
+                            .toDate())}, ${doc["reservationTime"]
+                        .toDate()
+                        .hour < 12 ?
+                    '오전' : '오후'}'),
                 new Text(
                     '예약 주소 : ${doc["address"]
                         .toString()} ${doc["detailedAddress"].toString()}'),
@@ -281,7 +324,6 @@ class ReservationListPageState extends State<ReservationListPage> {
   }
 
   getReservationInfo(int index, int length) {
-    print('index:${index}');
     try {
       return reservationList[length - index - 1];
     } catch (Exception, e) {

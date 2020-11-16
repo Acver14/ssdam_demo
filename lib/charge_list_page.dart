@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:ssdam_demo/customWidget/side_drawer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ssdam_demo/customWidget/loading_widget.dart';
+import 'package:async/async.dart';
 
 ChargeListPageState pageState;
 
@@ -18,11 +19,12 @@ class ChargeListPage extends StatefulWidget {
 
 class ChargeListPageState extends State<ChargeListPage> {
   FirebaseProvider fp;
-  final _date_format = new DateFormat('yyyy-MM-dd hh:mm');
+  final _date_format = new DateFormat('yyyy-MM-dd HH:mm');
   List<Card> chargeList;
   final ScrollController _infiniteController =
       ScrollController(initialScrollOffset: 0.0);
   QuerySnapshot charge_infos;
+  final AsyncMemoizer _memoizer = AsyncMemoizer();
 
   _scrollListener() {
     if (_infiniteController.offset >=
@@ -51,7 +53,7 @@ class ChargeListPageState extends State<ChargeListPage> {
     return charge_infos = await Firestore.instance
         .collection('chargeLog')
         .document(fp.getUserInfo()['email'])
-        .collection('chargeInfo')
+        .collection('chargeInfo').orderBy('charge_time')
         .getDocuments();
   }
 
@@ -120,8 +122,9 @@ class ChargeListPageState extends State<ChargeListPage> {
               children: <Widget>[
                 new Text(
                     '결제 금액 : ${doc['payment_amount']}'),
-                new Text('구매 품목 : 이용권 ${doc["ticket"].toString()}'),
-                new Text('리워드 : ${doc["reward"].toString()}'),
+                new Text('구매 품목 : 이용권 ${doc["tickets"] + doc['r_tickets'] +
+                    doc['p_tickets']}'),
+                new Text('포인 : ${doc["points"] + doc["promotion_points"]}'),
                 new Text('결제 상태 : ${status}')
               ],
             ),

@@ -19,13 +19,13 @@ class GoogleSignInButton extends StatelessWidget {
   /// with dark text is used.
   GoogleSignInButton(
       {this.onPressed,
-        this.text = 'Google로 시작하기',
-        this.textStyle,
-        this.splashColor,
-        this.darkMode = false,
-        // Google doesn't specify a border radius, but this looks about right.
-        this.borderRadius = defaultBorderRadius,
-        Key key})
+      this.text = 'Google로 로그인',
+      this.textStyle,
+      this.splashColor,
+      this.darkMode = false,
+      // Google doesn't specify a border radius, but this looks about right.
+      this.borderRadius = defaultBorderRadius,
+      Key key})
       : assert(text != null),
         super(key: key);
 
@@ -57,7 +57,7 @@ class GoogleSignInButton extends StatelessWidget {
                 padding: const EdgeInsets.all(1.0),
                 child: Container(
                   height: 38.0, // 40dp - 2*1dp border
-                  width: 60.0, // matches above
+                  width: 20.0, // matches above
                   decoration: BoxDecoration(
                     color: darkMode ? Colors.white : null,
                     borderRadius: BorderRadius.circular(this.borderRadius),

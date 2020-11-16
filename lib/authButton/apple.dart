@@ -19,7 +19,7 @@ class AppleSignInButton extends StatelessWidget {
   /// with dark text is used.
   AppleSignInButton(
       {this.onPressed,
-      this.text = 'Apple ID로 시작하기',
+      this.text = 'Apple로 로그인',
       this.textStyle,
       this.splashColor,
       this.darkMode = false,
@@ -57,7 +57,7 @@ class AppleSignInButton extends StatelessWidget {
                   padding: const EdgeInsets.all(1.0),
                   child: Container(
                     height: 38.0, // 40dp - 2*1dp border
-                    width: 60.0, // matches above
+                    width: 20.0, // matches above
                     decoration: BoxDecoration(
                       color: null,
                       borderRadius: BorderRadius.circular(this.borderRadius),

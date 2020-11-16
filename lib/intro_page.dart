@@ -59,7 +59,7 @@ class IntroPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'IntroViews Flutter', //title of app
+      title: '쓰담', //title of app
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ), //ThemeData
