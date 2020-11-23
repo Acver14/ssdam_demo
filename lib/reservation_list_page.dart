@@ -15,6 +15,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:ssdam_demo/customClass/size_constant.dart';
 import 'customClass/server_host.dart';
+import 'processing_page.dart';
 
 ReservationListPageState pageState;
 
@@ -206,40 +207,28 @@ class ReservationListPageState extends State<ReservationListPage> {
                               //   logger.d(response);
                               // }  라이더 배치 플랫폼 주석 처리 ( 임시 )
                               if (doc['type'] == 'deliver') {
-                                await Firestore.instance.collection('userInfo')
-                                    .document(fp
-                                    .getUser()
-                                    .uid)
-                                    .updateData({'getTrash?': false});
-                              }
-                              else {
-                                if ((doc["reservationTime"])
-                                    .toDate()
-                                    .difference(Timestamp.now().toDate())
-                                    .inHours > 3) {
                                   await Firestore.instance
                                       .collection('userInfo')
-                                      .document(fp
-                                      .getUser()
-                                      .uid)
+                                      .document(fp.getUser().uid)
+                                      .updateData({'getTrash?': false});
+                                } else {
+                                  // 예약 삭제 처리 고려 중
+                                  await Firestore.instance
+                                      .collection('userInfo')
+                                      .document(fp.getUser().uid)
                                       .updateData({
                                     "tickets": fp.getUserInfo()['tickets'] + 1
                                   });
                                   setState(() {});
                                 }
-                              }
-                              print('예약 삭제 성공');
-                              setState(() {
-                                Loading();
-                                cancelNotification(doc['applicationTime']
-                                    .millisecondsSinceEpoch
-                                    - DateTime(
-                                        DateTime
-                                            .now()
-                                            .year,
-                                        DateTime
-                                            .now()
-                                            .month,
+                                print('예약 삭제 성공');
+                                setState(() {
+                                  Loading();
+                                  cancelNotification(doc['applicationTime']
+                                          .millisecondsSinceEpoch -
+                                      DateTime(
+                                              DateTime.now().year,
+                                              DateTime.now().month,
                                         1,
                                         0,
                                         0,
@@ -286,9 +275,22 @@ class ReservationListPageState extends State<ReservationListPage> {
                                   fontSize: 16, color: Colors.black),
                             )),
                       );
-                    }) : new IconButton(icon: new Icon(Icons.delete),
-                  onPressed: () {},
-                  color: Colors.white.withOpacity(1.0),)
+                    })
+                : doc['state'] == 'processing'
+                ? new IconButton(icon: new Icon(Icons.details),
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ProcessingPage(
+                              reservation_info: doc),
+                    ));
+                ;
+              },)
+                : new IconButton(icon: new Icon(Icons.delete),
+              onPressed: () {},
+              color: Colors.white.withOpacity(1.0),)
           ],
             ),
             subtitle: Column(
@@ -310,7 +312,7 @@ class ReservationListPageState extends State<ReservationListPage> {
                         : '요청 사항이 없습니다.'}'),
                 new Row(
                   children: [
-                    Text('에약 상태 : '
+                    Text('예약 상태 : '
                     ),
                     Text('${state}',
                       style: TextStyle(

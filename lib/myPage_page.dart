@@ -17,6 +17,7 @@ import 'package:share/share.dart';
 import 'package:ntp/ntp.dart';
 import 'package:popup_box/popup_box.dart';
 import 'package:http/http.dart' as http;
+import 'customClass/otp.dart';
 
 MyPageState pageState;
 
@@ -117,30 +118,281 @@ class MyPageState extends State<MyPage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('이름 : ${fp.getUserInfo()['name']}'),
-                    Text('이메일 : ${fp.getUserInfo()['email']}'),
-                    //마케팅 수집 동의 변경 부 (수정 필요)
-                    Row(
-                      children: <Widget>[
-                        Checkbox(
-                          value: fp.getUserInfo()['marketing'],
-                          onChanged: (newValue) async {
-                            await Firestore.instance.collection('userInfo')
-                                .document(fp
-                                .getUser()
-                                .uid)
-                                .setData(
-                                {
-                                  'marketing': newValue
-                                }, merge: true
-                            );
-                            await fp.setUserInfo_notify();
-                            setState() {};
+                InkWell(
+                  child: Text('이름 : ${fp.getUserInfo()['name']}'),
+                  onTap: () async {
+                    TextEditingController _nameCon =
+                        new TextEditingController();
+                    await PopupBox.showPopupBox(
+                        context: context,
+                        button: MaterialButton(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          color: COLOR_SSDAM,
+                          child: Text(
+                            'Ok',
+                            style: TextStyle(color: Colors.white, fontSize: 20),
+                          ),
+                          onPressed: () async {
+                            await Firestore.instance
+                                .collection('userInfo')
+                                .document(fp.getUser().uid)
+                                .setData({'name': _nameCon.text.trim()},
+                                    merge: true);
+                            await fp.setUserInfo();
+                            Navigator.of(context).pop();
                           },
                         ),
-                        Text("마케팅 수신 동의"),
-                      ],
+                        willDisplayWidget: Column(
+                          children: <Widget>[
+                            Text(
+                              '이름을 입력해주세요',
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.black),
+                            ),
+                            TextField(
+                              controller: _nameCon,
+                            )
+                          ],
+                        ));
+                  },
+                ),
+                Text('이메일 : ${fp.getUserInfo()['email']}'),
+                InkWell(
+                  child: Text(
+                      '휴대폰 : ${fp.getUserInfo()['phone'] == '0' ? '번호를 인증하셔야합니다.' : fp.getUserInfo()['phone']}'),
+                  onTap: () async {
+                    TextEditingController _phoneCon =
+                        new TextEditingController();
+                    TextEditingController _otpCon = new TextEditingController();
+                    FlutterOtp _otp = new FlutterOtp();
+                    if (fp.getUserInfo()['phone'] == '0') {
+                      var user_list = await Firestore.instance
+                          .collection('uidSet')
+                          .getDocuments();
+                      await PopupBox.showPopupBox(
+                          context: context,
+                          button: MaterialButton(
+                            minWidth: grid_width * 5,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            color: COLOR_SSDAM,
+                            child: Text(
+                              'Ok',
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 20),
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                          ),
+                          willDisplayWidget: Center(
+                              child: Row(
+                            children: [
+                              Flexible(
+                                child: TextField(
+                                  controller: _phoneCon,
+                                  decoration: InputDecoration(
+                                    prefixIcon: Icon(Icons.phone),
+                                    hintText: "Phone(01012345678)",
+                                  ),
+                                ),
+                              ),
+                              FlatButton(
+                                  child: Text(
+                                    '전송',
+                                    style: TextStyle(fontSize: 18),
+                                  ),
+                                  onPressed: () async {
+                                    var phone_check = false;
+                                    user_list.documents.forEach((element) {
+                                      logger.d(element.data['phone']);
+                                      if (_phoneCon.text.trim() ==
+                                          element.data['phone']) {
+                                        phone_check = true;
+                                        return;
+                                      }
+                                    });
+                                    if (phone_check) {
+                                      await PopupBox.showPopupBox(
+                                          context: context,
+                                          button: MaterialButton(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                          ),
+                                          willDisplayWidget: Column(
+                                            children: <Widget>[
+                                              Text(
+                                                '중복된 번호입니다.',
+                                                style: TextStyle(
+                                                    fontSize: 16,
+                                                    color: Colors.black),
+                                              ),
+                                            ],
+                                          ));
+                                    } else {
+                                      await _otp.sendOtp(_phoneCon.text.trim(),
+                                          null, 1000, 9999, '+82');
+                                      await PopupBox.showPopupBox(
+                                          context: context,
+                                          button: MaterialButton(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                          ),
+                                          willDisplayWidget: Column(
+                                            children: <Widget>[
+                                              Row(
+                                                children: [
+                                                  Flexible(
+                                                    child: TextField(
+                                                      controller: _otpCon,
+                                                      decoration:
+                                                          InputDecoration(
+                                                        prefixIcon:
+                                                            Icon(Icons.chat),
+                                                        hintText: "1234",
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  FlatButton(
+                                                      child: Text(
+                                                        '확인',
+                                                        style: TextStyle(
+                                                            fontSize: 18),
+                                                      ),
+                                                      onPressed: () async {
+                                                        var result = _otp
+                                                            .resultChecker(int
+                                                                .parse(_otpCon
+                                                                    .text
+                                                                    .trim()));
+                                                        if (result) {
+                                                          Firestore.instance
+                                                              .collection(
+                                                                  'userInfo')
+                                                              .document(fp
+                                                                  .getUser()
+                                                                  .uid)
+                                                              .setData({
+                                                            'phone': _phoneCon
+                                                                .text
+                                                                .trim()
+                                                          }, merge: true);
+                                                          Firestore.instance
+                                                              .collection(
+                                                                  'uidSet')
+                                                              .document(
+                                                                  fp.getUserInfo()[
+                                                                      'email'])
+                                                              .setData({
+                                                            'phone': _phoneCon
+                                                                .text
+                                                                .trim()
+                                                          }, merge: true);
+                                                          await fp
+                                                              .setUserInfo_notify();
+                                                          await PopupBox
+                                                              .showPopupBox(
+                                                                  context:
+                                                                      context,
+                                                                  button:
+                                                                      MaterialButton(
+                                                                    shape:
+                                                                        RoundedRectangleBorder(
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                              20),
+                                                                    ),
+                                                                  ),
+                                                                  willDisplayWidget:
+                                                                      Column(
+                                                                    children: <
+                                                                        Widget>[
+                                                                      Text(
+                                                                        '인증이 완료되었습니다.',
+                                                                        style: TextStyle(
+                                                                            fontSize:
+                                                                                16,
+                                                                            color:
+                                                                                Colors.black),
+                                                                      ),
+                                                                    ],
+                                                                  ));
+                                                          Navigator.of(context)
+                                                              .pop();
+                                                        } else {
+                                                          await PopupBox
+                                                              .showPopupBox(
+                                                                  context:
+                                                                      context,
+                                                                  button:
+                                                                      MaterialButton(
+                                                                    shape:
+                                                                        RoundedRectangleBorder(
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                              20),
+                                                                    ),
+                                                                  ),
+                                                                  willDisplayWidget:
+                                                                      Column(
+                                                                    children: <
+                                                                        Widget>[
+                                                                      Text(
+                                                                        '잘못된 인증번호입니다. 재전송합니다.',
+                                                                        style: TextStyle(
+                                                                            fontSize:
+                                                                                16,
+                                                                            color:
+                                                                                Colors.black),
+                                                                      ),
+                                                                    ],
+                                                                  ));
+                                                          await _otp.sendOtp(
+                                                              _phoneCon.text
+                                                                  .trim(),
+                                                              null,
+                                                              0000,
+                                                              9999,
+                                                              '+82');
+                                                        }
+                                                      })
+                                                ],
+                                              ),
+                                            ],
+                                          ));
+                                      Navigator.of(context).pop();
+                                    }
+                                  })
+                            ],
+                          )));
+                    }
+                  },
+                ),
+                //마케팅 수집 동의 변경 부 (수정 필요)
+                Row(
+                  children: <Widget>[
+                    Checkbox(
+                      value: fp.getUserInfo()['marketing'],
+                      onChanged: (newValue) async {
+                        await Firestore.instance
+                            .collection('userInfo')
+                            .document(fp.getUser().uid)
+                            .setData({'marketing': newValue}, merge: true);
+                        await fp.setUserInfo_notify();
+                        setState() {}
+                        ;
+                      },
                     ),
+                    Text("마케팅 수신 동의"),
+                  ],
+                ),
                   ],
                 )
               ],
@@ -598,4 +850,19 @@ class MyPageState extends State<MyPage> {
         )
     );
   }
+}
+
+showGuidance(String text, GlobalKey<ScaffoldState> _scaffoldKey) {
+  _scaffoldKey.currentState
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(
+      backgroundColor: Colors.black,
+      duration: Duration(seconds: 10),
+      content: Text(text),
+      action: SnackBarAction(
+        label: "Done",
+        textColor: Colors.white,
+        onPressed: () {},
+      ),
+    ));
 }

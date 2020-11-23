@@ -82,13 +82,6 @@ class SignUpPageState extends State<SignUpPage> {
                     child: Column(
                       children: <Widget>[
                         TextField(
-                          controller: _nameCon,
-                          decoration: InputDecoration(
-                            prefixIcon: Icon(Icons.account_box),
-                            hintText: "Name",
-                          ),
-                        ),
-                        TextField(
                           controller: _mailCon,
                           decoration: InputDecoration(
                             prefixIcon: Icon(Icons.mail),
@@ -407,7 +400,6 @@ class SignUpPageState extends State<SignUpPage> {
     bool result = await fp.signUpWithEmail(
         _mailCon.text.trim(),
         _pwCon.text.trim(),
-        _nameCon.text.trim(),
         _phoneCon.text.trim(),
         _marketingAgreement,
         _personalInformationAgreement,

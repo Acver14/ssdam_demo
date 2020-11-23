@@ -59,8 +59,8 @@ class FlutterOtp {
           // "msg": '[쓰레기를 담다-쓰담] 인증번호는 [$_otp]입니다.'
           "otp": _otp.toString()
         }));
-
     //Logger().d(jsonDecode(response.body));
+    Logger().d('send otp');
   }
 
   /// This function is used to validate the OTP entered by the user, by comparing

@@ -19,7 +19,6 @@ class EnrollUserInfoPage extends StatefulWidget {
 class EnrollUserInfoPageState extends State<EnrollUserInfoPage> {
   TextEditingController _mailCon = TextEditingController();
   TextEditingController _phoneCon = TextEditingController();
-  TextEditingController _nameCon = TextEditingController();
   TextEditingController _otpCon = TextEditingController();
   TextEditingController _promotionCon = TextEditingController();
   bool _marketingAgreement = false;
@@ -81,13 +80,6 @@ class EnrollUserInfoPageState extends State<EnrollUserInfoPage> {
                     Container(
                       child: Column(
                         children: <Widget>[
-                          TextField(
-                            controller: _nameCon,
-                            decoration: InputDecoration(
-                              prefixIcon: Icon(Icons.person),
-                              hintText: "Name",
-                            ),
-                          ),
                           TextField(
                             controller: _mailCon,
                             decoration: InputDecoration(
@@ -354,8 +346,7 @@ class EnrollUserInfoPageState extends State<EnrollUserInfoPage> {
                   onPressed: () {
                     FocusScope.of(context)
                         .requestFocus(new FocusNode()); // 키보드 감춤
-                    if (_nameCon.text.trim() == '' ||
-                        _phoneCon.text.trim() == '' ||
+                    if (_phoneCon.text.trim() == '' ||
                         _mailCon.text.trim() == '') {
                       _scaffoldKey.currentState
                         ..hideCurrentSnackBar()
@@ -389,6 +380,30 @@ class EnrollUserInfoPageState extends State<EnrollUserInfoPage> {
                   },
                 ),
               ),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                child: RaisedButton(
+                  color: Colors.redAccent,
+                  child: Text(
+                    '취소',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18.0,
+                      fontFamily: "Roboto",
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  onPressed: () async {
+                    await fp.getUser().delete().then((value) {
+                      logger.d('delete complete');
+                    }).catchError((onError) {
+                      logger.d('error in deleting user, ${onError}');
+                    });
+                    await fp.signOut();
+                    logger.d('delete complete');
+                  },
+                ),
+              )
             ],
           )),
     );
@@ -408,7 +423,6 @@ class EnrollUserInfoPageState extends State<EnrollUserInfoPage> {
         ),
       ));
     bool result = await fp.enroll_user_info(
-        _nameCon.text.trim(),
         _phoneCon.text.trim(),
         _marketingAgreement,
         _personalInformationAgreement,

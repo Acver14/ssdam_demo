@@ -11,6 +11,7 @@ import 'package:ssdam_demo/authButton/facebook.dart';
 import 'package:ssdam_demo/authButton/apple.dart';
 import 'enroll_email_page.dart';
 import 'package:ssdam_demo/style/customColor.dart';
+import 'package:url_launcher/url_launcher.dart';
 //import 'package:ssdam_demo/auth/kakao_login_page.dart';
 
 SignInPageState pageState;
@@ -195,22 +196,31 @@ class SignInPageState extends State<SignInPage> {
             margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    FlatButton(
-                      child: Text(
-                        "회원가입",
-                        style: TextStyle(color: Colors.green, fontSize: 16),
-                      ),
-                      onPressed: () {
-                        Navigator.push(context,
-                            MaterialPageRoute(builder: (context) => SignUpPage()));
-                      },
-                    )
-                  ],
-                ),
-              ),
-            ],
+              children: <Widget>[
+                FlatButton(
+                  child: Text(
+                    "회원가입",
+                    style: TextStyle(color: Colors.green, fontSize: 16),
+                  ),
+                  onPressed: () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => SignUpPage()));
+                  },
+                )
+              ],
+            ),
           ),
+          //Text('회원 가입 완료 시 자동으로 개인정보처리 약관에 동의 처리 될 수 있습니다.',textAlign: TextAlign.center,),
+          InkWell(
+            child: Text(
+              '개인정보처리방침',
+              textAlign: TextAlign.center,
+            ),
+            onTap: () => launchWebView(
+                'https://ssdam.net/%EA%B0%9C%EC%9D%B8%EC%A0%95%EB%B3%B4%EC%B2%98%EB%A6%AC%EB%B0%A9%EC%B9%A8.html'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -354,4 +364,12 @@ class SignInPageState extends State<SignInPage> {
       ));
   }
 
+  launchWebView(String url) async {
+    if (await canLaunch(url)) {
+      await launch(url, forceSafariVC: true, forceWebView: true);
+    }
+    else {
+      throw 'could not launch';
+    }
+  }
 }

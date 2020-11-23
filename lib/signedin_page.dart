@@ -94,9 +94,9 @@ class SignedInPageState extends State<SignedInPage> {
 
   setDeviceToken() async {
     await Firestore.instance
-        .collection('fcmTokenInfo')
+        .collection('userInfo')
         .document(fp.getUser().uid)
-        .setData({'token': fp.token});
+        .setData({'token': fp.token}, merge: true);
     logger.d('setDeviceToke: ${fp.getUser().uid}, ${fp.token}');
     token_save = true;
   }
@@ -159,20 +159,30 @@ class SignedInPageState extends State<SignedInPage> {
     //   _reservation_time = _reservation_time.add(Duration(days: 1));
     // }
     // reservationInfo.setReservationTime(_reservation_time);
-
-    if (tmpTime.hour < 12) {
+    if (tmpTime.hour > 19) {
+      _reservation_time =
+          DateTime(tmpTime.year, tmpTime.month, tmpTime.day + 1, 10, 0);
+      time_zone = '아침';
+    }
+    else if (tmpTime.hour > 13) {
       _reservation_time =
           DateTime(tmpTime.year, tmpTime.month, tmpTime.day, 20, 0);
-      time_zone = '오후';
+      time_zone = '저녁';
+    } else if (tmpTime.hour > 9) {
+      _reservation_time =
+          DateTime(tmpTime.year, tmpTime.month, tmpTime.day, 14, 0);
+      time_zone = '점심';
     } else {
       _reservation_time =
-          DateTime(tmpTime.year, tmpTime.month, tmpTime.day + 1, 12, 0);
-      time_zone = '오전';
+          DateTime(tmpTime.year, tmpTime.month, tmpTime.day, 10, 0);
+      time_zone = '아침';
     }
     if (_reservation_time.weekday == 6) {
       _reservation_time = _reservation_time.add(Duration(days: 2));
+      time_zone = '아침';
     } else if (_reservation_time.weekday == 7) {
       _reservation_time = _reservation_time.add(Duration(days: 1));
+      time_zone = '아침';
     }
     reservationInfo.setReservationTime(_reservation_time);
   }
@@ -224,8 +234,7 @@ class SignedInPageState extends State<SignedInPage> {
     reservationInfo.setInitialInfo(fp
         .getUser()
         .uid, fp
-        .getUser()
-        .email);
+        .getUserInfo()['email'], fp.getUserInfo()['phone']);
     if (!token_save) setDeviceToken();
     // if (_getUserInfo) {
     //   return fp.getUserInfo();
@@ -518,7 +527,7 @@ class SignedInPageState extends State<SignedInPage> {
                   //reservationInfo.getReservationTime() ??
                     _reservation_time)}, ${time_zone}',
                 onPressed: () async {
-                  print('pressed time button');
+                  //print('pressed time button');
                   DateTime initial_date = await NTP.now();
                   switch (initial_date.weekday) {
                     case 7:
@@ -547,7 +556,7 @@ class SignedInPageState extends State<SignedInPage> {
                     setState(() {
                       reservationInfo.setReservationTime(_reservation_time);
                     });
-                    DateTime t = initial_date.add(Duration(hours: 1));
+                    //DateTime t = initial_date.add(Duration(hours: 1));
                     // showTimePicker(
                     //   context: context,
                     //   initialTime: TimeOfDay(
@@ -642,7 +651,6 @@ class SignedInPageState extends State<SignedInPage> {
                     //         .getReservationTime()}');
                     //   }
                     //   );
-                    logger.d('pop up..?');
                     await PopupBox.showPopupBox(
                         context: context,
                         button: MaterialButton(),
@@ -658,41 +666,89 @@ class SignedInPageState extends State<SignedInPage> {
                               value: time_zone,
                               items: [
                                 DropdownMenuItem(
-                                  child: Text('오전'),
-                                  value: '오전',
+                                  child: Text('아침'),
+                                  value: '아침',
                                 ),
                                 DropdownMenuItem(
-                                  child: Text('오후'),
-                                  value: '오후',
+                                  child: Text('점심'),
+                                  value: '점심',
+                                ),
+                                DropdownMenuItem(
+                                  child: Text('저녁'),
+                                  value: '저녁',
                                 ),
                               ],
-                              onChanged: (value) {
-                                setState(() {
-                                  time_zone = value;
-                                  if (time_zone == '오전') {
-                                    reservationInfo.setReservationTime(
-                                        DateTime(_reservation_time.year,
-                                            _reservation_time.month,
-                                            _reservation_time.day, 12,
-                                            0));
-                                    _reservation_time =
-                                        reservationInfo.getReservationTime();
-                                  }
-                                  else {
-                                    reservationInfo.setReservationTime(
-                                        DateTime(_reservation_time.year,
-                                            _reservation_time.month,
-                                            _reservation_time.day, 20,
-                                            0));
-                                    _reservation_time =
-                                        reservationInfo.getReservationTime();
-                                  }
-                                });
+                              onChanged: (value) async {
+                                time_zone = value;
                                 Navigator.of(context).pop();
                               },
                             )
                           ],
                         ));
+                    _now = await NTP.now();
+                    //logger.d(_reservation_time);
+                    if (_reservation_time.isBefore(
+                        _now.subtract(Duration(minutes: 59)))) {
+                      await setReservationTime();
+                      setState(() {});
+                      await PopupBox.showPopupBox(
+                          context: context,
+                          button: MaterialButton(
+                            minWidth: grid_width * 5,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            color: COLOR_SSDAM,
+                            child: Text(
+                              'Ok',
+                              style: TextStyle(
+                                  color: Colors.white, fontSize: 20),
+                            ),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          willDisplayWidget: Column(
+                            children: <Widget>[
+                              Text(
+                                '현시각 이후로 예약 시간대를 설정해주세요',
+                                style: TextStyle(
+                                    fontSize: 16, color: Colors.black),
+                              ),
+                            ],
+                          ));
+                    } else {
+                      setState(() {
+                        if (time_zone == '아침') {
+                          reservationInfo.setReservationTime(
+                              DateTime(_reservation_time.year,
+                                  _reservation_time.month,
+                                  _reservation_time.day, 10,
+                                  0));
+                          _reservation_time =
+                              reservationInfo.getReservationTime();
+                        }
+                        else if (time_zone == '점심') {
+                          reservationInfo.setReservationTime(
+                              DateTime(_reservation_time.year,
+                                  _reservation_time.month,
+                                  _reservation_time.day, 14,
+                                  0));
+                          _reservation_time =
+                              reservationInfo.getReservationTime();
+                        }
+                        else {
+                          reservationInfo.setReservationTime(
+                              DateTime(_reservation_time.year,
+                                  _reservation_time.month,
+                                  _reservation_time.day, 20,
+                                  0));
+                          _reservation_time =
+                              reservationInfo.getReservationTime();
+                        }
+                      });
+                    }
+                    logger.d(_reservation_time);
                   });
 
                   // TimePickerSpinner(
@@ -957,7 +1013,30 @@ class SignedInPageState extends State<SignedInPage> {
     reservationInfo.setCustomerRequests(customerRequestCont.text.trim());
     setRememberRequests(reservationInfo.getCustomerRequests());
     reservationInfo.setApplicationTime(_now);
-    if (reservationInfo
+    if (fp.getUserInfo()['phone'] == '0') {
+      return await PopupBox.showPopupBox(
+          context: context,
+          button: MaterialButton(
+            minWidth: grid_width * 5,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            color: COLOR_SSDAM,
+            child: Text(
+              'Ok',
+              style: TextStyle(color: Colors.white, fontSize: 20),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+          willDisplayWidget: Center(
+              child: Text(
+                '마이페이지에서 휴대폰 인증을 해주시기 바랍니다.',
+                style: TextStyle(fontSize: 16, color: Colors.black),
+              )));
+    }
+    else if (reservationInfo
         .getAddress()
         .length > 0 && reservationInfo.getReservationTime().difference(_now) >
         Duration(minutes: 59)) {

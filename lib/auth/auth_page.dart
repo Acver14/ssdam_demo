@@ -70,6 +70,7 @@ class AuthPageState extends State<AuthPage> {
             timer.cancel();
             Logger().d('timer cancel');
           }
+
           return EnrollUserInfo_exceptEmailPage();
         } else {
           //setDeviceToken();

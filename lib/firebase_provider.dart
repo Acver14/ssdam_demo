@@ -18,6 +18,7 @@ import 'package:popup_box/popup_box.dart';
 import 'dart:io';
 import 'package:apple_sign_in_firebase/apple_sign_in_firebase.dart';
 import 'package:apple_sign_in/apple_sign_in.dart';
+import 'dart:math';
 
 Logger logger = Logger();
 
@@ -42,9 +43,9 @@ class FirebaseProvider with ChangeNotifier {
 
   setDeviceToken() async {
     await Firestore.instance
-        .collection('fcmTokenInfo')
+        .collection('userInfo')
         .document(_user.uid)
-        .setData({'token': token});
+        .setData({'token': token}, merge: true);
   }
 
   FirebaseUser getUser() {
@@ -67,8 +68,8 @@ class FirebaseProvider with ChangeNotifier {
   }
 
   // 이메일/비밀번호로 Firebase에 회원가입
-  Future<bool> signUpWithEmail(String email, String password, String name,
-      String phone, bool marketing, bool personal,
+  Future<bool> signUpWithEmail(String email, String password, String phone,
+      bool marketing, bool personal,
       [String recommendedCode]) async {
     try {
       AuthResult result = await fAuth.createUserWithEmailAndPassword(
@@ -76,10 +77,9 @@ class FirebaseProvider with ChangeNotifier {
       if (result.user != null) {
         _user = result.user;
         if (recommendedCode != null)
-          await enroll_user_info(
-              name, phone, marketing, personal, recommendedCode);
+          await enroll_user_info(phone, marketing, personal, recommendedCode);
         else
-          await enroll_user_info(name, phone, marketing, personal);
+          await enroll_user_info(phone, marketing, personal);
         //사용자 이름 업데이트
         // UserUpdateInfo uui = UserUpdateInfo();
         // uui.displayName = name;
@@ -187,6 +187,7 @@ class FirebaseProvider with ChangeNotifier {
         uui.displayName = name;
         await user.updateProfile(uui);
         setUser(user);
+        await enroll_user_info(null, false, true);
         await setUserInfo();
         // await Firestore.instance
         //     .collection('userInfo')
@@ -292,35 +293,35 @@ class FirebaseProvider with ChangeNotifier {
   //   }
   // }
 
-  Future<bool> enroll_user_info(String name, String phone, bool marketing,
-      bool personal, [String recommendedCode, String email]) async {
+  Future<bool> enroll_user_info(var phone, bool marketing, bool personal,
+      [String recommendedCode, String email]) async {
     try {
       if (email != null) {
         await _user.updateEmail(email);
       }
+
       await Firestore.instance
           .collection('userInfo')
           .document(_user.uid)
-          .setData(
-          {
-            'name': name,
-            'phone': phone,
-            'email': email == null ? _user.email : email,
-            'marketing': marketing,
-            'personal': personal,
-            'recommender': recommendedCode == null ? 'none' : recommendedCode
-          }, merge: true);
+          .setData({
+        'name': '쓰담_${DateTime.now().millisecondsSinceEpoch % 100000}',
+        'phone': phone == null ? '0' : phone,
+        'email': email == null ? _user.email : email,
+        'marketing': marketing,
+        'personal': personal,
+        'recommender': recommendedCode == null ? 'none' : recommendedCode,
+        'getTrash?': false
+      }, merge: true);
       await Firestore.instance
           .collection('uidSet')
           .document(email == null ? _user.email : email)
           .setData(
           {
-            'phone': phone,
+            'phone': phone == null ? '0' : phone,
           }, merge: true);
       if (!_user.isEmailVerified) {
         await _user.sendEmailVerification();
         UserUpdateInfo uui = UserUpdateInfo();
-        uui.displayName = name;
         await _user.updateProfile(uui);
         setLastFBMessage('이메일 인증 후 로그인해주시기 바랍니다.');
         signOut();

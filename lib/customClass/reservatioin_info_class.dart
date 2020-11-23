@@ -19,6 +19,7 @@ class ReservationInfoProvider with ChangeNotifier {
   DateTime _reservationTime;
   DateTime _applicationTime;
   bool _promotion;
+  String _phone;
 
   ReservationInfoProvider() {
     _detailedAddress = '';
@@ -27,9 +28,10 @@ class ReservationInfoProvider with ChangeNotifier {
   }
 
   // Setter
-  void setInitialInfo(String uid, String email) {
+  void setInitialInfo(String uid, String email, String phone) {
     this._uid = uid;
     this._email = email;
+    this._phone = phone;
   }
 
   void setName(String name) => this._name = name;
@@ -126,7 +128,8 @@ class ReservationInfoProvider with ChangeNotifier {
       "type": rType,
       "state": 'register',
       "promotion": _promotion,
-      "_id": '${_email}_${_applicationTime.millisecondsSinceEpoch}'
+      "_id": '${_email}_${_applicationTime.millisecondsSinceEpoch}',
+      "phone": _phone
     });
 
     await Firestore.instance
@@ -142,6 +145,8 @@ class ReservationInfoProvider with ChangeNotifier {
       "customerRequest": _customerRequests,
       "type": rType,
       "uid": _uid,
+      "phone": _phone,
+      "batching": false
     });
     return true;
   }

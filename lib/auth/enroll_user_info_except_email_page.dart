@@ -20,7 +20,6 @@ class EnrollUserInfo_exceptEmailPage extends StatefulWidget {
 class EnrollUserInfo_exceptEmailPageState
     extends State<EnrollUserInfo_exceptEmailPage> {
   TextEditingController _phoneCon = TextEditingController();
-  TextEditingController _nameCon = TextEditingController();
   TextEditingController _otpCon = TextEditingController();
   TextEditingController _promotionCon = TextEditingController();
   bool _marketingAgreement = false;
@@ -41,7 +40,6 @@ class EnrollUserInfo_exceptEmailPageState
 
   @override
   void dispose() {
-    _nameCon.dispose();
     _phoneCon.dispose();
     super.dispose();
   }
@@ -83,13 +81,6 @@ class EnrollUserInfo_exceptEmailPageState
                       Container(
                         child: Column(
                           children: <Widget>[
-                            TextField(
-                              controller: _nameCon,
-                              decoration: InputDecoration(
-                                prefixIcon: Icon(Icons.person),
-                                hintText: "Name",
-                              ),
-                            ),
                             !otp_true
                                 ? Row(
                                     children: [
@@ -111,7 +102,7 @@ class EnrollUserInfo_exceptEmailPageState
                                             var phone_check = false;
                                             user_list.documents
                                                 .forEach((element) {
-                                              logger.d(element.data['phone']);
+                                              //logger.d(element.data['phone']);
                                               if (_phoneCon.text.trim() ==
                                                   element.data['phone']) {
                                                 phone_check = true;
@@ -131,6 +122,7 @@ class EnrollUserInfo_exceptEmailPageState
                                               setState(() {
                                                 otp_send = true;
                                               });
+                                              logger.d(otp_send);
                                             }
                                           })
                                     ],
@@ -351,8 +343,7 @@ class EnrollUserInfo_exceptEmailPageState
                     onPressed: () {
                       FocusScope.of(context)
                           .requestFocus(new FocusNode()); // 키보드 감춤
-                      if (_nameCon.text.trim() == '' ||
-                          _phoneCon.text.trim() == '') {
+                      if (_phoneCon.text.trim() == '') {
                         _scaffoldKey.currentState
                           ..hideCurrentSnackBar()
                           ..showSnackBar(SnackBar(
@@ -385,6 +376,31 @@ class EnrollUserInfo_exceptEmailPageState
                     },
                   ),
                 ),
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  child: RaisedButton(
+                    color: Colors.redAccent,
+                    child: Text(
+                      '취소',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18.0,
+                        fontFamily: "Roboto",
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    onPressed: () async {
+                      logger.d('delete start');
+                      await fp.getUser().delete().then((value) {
+                        logger.d('delete complete');
+                      }).catchError((onError) {
+                        logger.d('error in deleting user, ${onError}');
+                      });
+                      await fp.signOut();
+                      logger.d('delete complete');
+                    },
+                  ),
+                )
               ],
             )));
   }
@@ -404,7 +420,6 @@ class EnrollUserInfo_exceptEmailPageState
         ),
       ));
     bool result = await fp.enroll_user_info(
-        _nameCon.text.trim(),
         _phoneCon.text.trim(),
         _marketingAgreement,
         _personalInformationAgreement,
