@@ -25,6 +25,7 @@ import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:ntp/ntp.dart';
+import 'package:image_slider/image_slider.dart';
 
 SignedInPageState pageState;
 
@@ -43,7 +44,8 @@ class SignedInPage extends StatefulWidget {
   }
 }
 
-class SignedInPageState extends State<SignedInPage> {
+class SignedInPageState extends State<SignedInPage>
+    with TickerProviderStateMixin {
   FirebaseProvider fp;
   FirebaseStorage fs = FirebaseStorage.instance;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -62,6 +64,9 @@ class SignedInPageState extends State<SignedInPage> {
   var button_pressed = false;
   var token_save = false;
   List<String> _event_list = new List();
+  TabController tabController;
+  var _banner_loading = false;
+  List<String> events;
 
   void firebaseCloudMessaging_Listeners() {
     if (Platform.isIOS) iOS_Permission();
@@ -108,13 +113,13 @@ class SignedInPageState extends State<SignedInPage> {
     getRememberAddr();
     getRememberRequests();
     //setReservationTime();
-    eventSetting();
+    //eventSetting();
     // for local_noti
     var androidSetting = AndroidInitializationSettings('@mipmap/ic_launcher');
     var iosSetting = IOSInitializationSettings();
     var initializationSettings =
         InitializationSettings(androidSetting, iosSetting);
-    loadingBanner();
+    //loadingBanner();
     _flutterLocalNotificationsPlugin.initialize(initializationSettings,
         onSelectNotification: onSelectNotification);
     Timer.periodic(new Duration(minutes: 3), (timer) {
@@ -162,27 +167,27 @@ class SignedInPageState extends State<SignedInPage> {
     if (tmpTime.hour > 19) {
       _reservation_time =
           DateTime(tmpTime.year, tmpTime.month, tmpTime.day + 1, 10, 0);
-      time_zone = '아침';
+      time_zone = '10:00';
     }
     else if (tmpTime.hour > 13) {
       _reservation_time =
           DateTime(tmpTime.year, tmpTime.month, tmpTime.day, 20, 0);
-      time_zone = '저녁';
+      time_zone = '20:00';
     } else if (tmpTime.hour > 9) {
       _reservation_time =
           DateTime(tmpTime.year, tmpTime.month, tmpTime.day, 14, 0);
-      time_zone = '점심';
+      time_zone = '14:00';
     } else {
       _reservation_time =
           DateTime(tmpTime.year, tmpTime.month, tmpTime.day, 10, 0);
-      time_zone = '아침';
+      time_zone = '10:00';
     }
     if (_reservation_time.weekday == 6) {
       _reservation_time = _reservation_time.add(Duration(days: 2));
-      time_zone = '아침';
+      time_zone = '10:00';
     } else if (_reservation_time.weekday == 7) {
       _reservation_time = _reservation_time.add(Duration(days: 1));
-      time_zone = '아침';
+      time_zone = '10:00';
     }
     reservationInfo.setReservationTime(_reservation_time);
   }
@@ -243,22 +248,35 @@ class SignedInPageState extends State<SignedInPage> {
   }
 
   Future<List<String>> loadingBanner() async {
-    //logger.d(_event_list.length);
-    if (_event_list.length == 0) {
+    //logger.d(!_banner_loading);
+    var ret_list = new List();
+    if (!_banner_loading) {
+      _banner_loading = true;
+      await eventSetting();
       for (int i = 0; i < event_num; i++) {
-        _event_list.add(await FirebaseStorage.instance.ref()
+        var temp = await FirebaseStorage.instance
+            .ref()
             .child('banner/event_$i.png')
-            .getDownloadURL());
+            .getDownloadURL();
+        _event_list.add(temp);
       }
+      setState(() {
+        tabController =
+            new TabController(vsync: this, length: _event_list.length);
+      });
     }
     return _event_list;
   }
 
   Future<void> eventSetting() async {
-    event_info = await Firestore.instance.collection('ssdamInfo')
-        .document('bannerState')
-        .get();
-    event_num = event_info.data.length;
+    //logger.d(event_num);
+    if (event_num == 0) {
+      event_info = await Firestore.instance.collection('ssdamInfo')
+          .document('bannerState')
+          .get();
+      event_num = event_info.data.length;
+    }
+    //logger.d(event_num);
   }
 
   @override
@@ -291,46 +309,126 @@ class SignedInPageState extends State<SignedInPage> {
           FutureBuilder(
               future: loadingBanner(),
               builder: (BuildContext context, AsyncSnapshot snapshot) {
+                logger.d(snapshot.hasData);
                 if (snapshot.hasData) {
-                  //(snapshot.data);
+                  logger.d(snapshot.data);
                   List<String>events = snapshot.data;
-                  return CarouselSlider(
-                    options: CarouselOptions(
-                      height: grid_height * 3,
-                      reverse: true,
-                      initialPage: 0,
-                      autoPlay: true,
-                      autoPlayInterval: Duration(seconds: 3),
-                    ),
-                    items: events // 네트워크 이미지 보류
-                        .map((item) =>
-                        Container(
-                          child: Container(
-                            margin: EdgeInsets.all(5.0),
-                            child: ClipRRect(
-                                borderRadius: BorderRadius.all(
-                                    Radius.circular(5.0)),
-                                child: FlatButton(
-                                  child: Image.network(
-                                      item, fit: BoxFit.cover, width: 1000.0),
-                                  onPressed: () {
-                                    // Navigator.push(
-                                    //   context,
-                                    //   MaterialPageRoute(
-                                    //     builder: (context) => eventPage(),
-                                    //   ), //MaterialPageRoute
-                                    // );
-                                    var idx = events.indexOf(item);
-                                    launchWebView(
-                                        'https://' + event_info['event_$idx']);
-                                  },
-                                )),
-                          ),
-                        )).toList(),
+                  // return CarouselSlider(
+                  //   options: CarouselOptions(
+                  //     height: 170,
+                  //     reverse: true,
+                  //     initialPage: 0,
+                  //     autoPlay: true,
+                  //     autoPlayInterval: Duration(seconds: 3),
+                  //   ),
+                  //   items: events // 네트워크 이미지 보류
+                  //       .map((item) =>
+                  //       Container(
+                  //         child: Container(
+                  //           margin: EdgeInsets.all(5.0),
+                  //           // child: ClipRRect(
+                  //           //     borderRadius: BorderRadius.all(
+                  //           //         Radius.circular(5.0)),
+                  //               child: FlatButton(
+                  //                 child: Image.network(
+                  //                     item, height: 400, width: 1000.0),
+                  //                 onPressed: () {
+                  //                   // Navigator.push(
+                  //                   //   context,
+                  //                   //   MaterialPageRoute(
+                  //                   //     builder: (context) => eventPage(),
+                  //                   //   ), //MaterialPageRoute
+                  //                   // );
+                  //                   var idx = events.indexOf(item);
+                  //                   launchWebView(
+                  //                       'https://' + event_info['event_$idx']);
+                  //                 },
+                  //               ),
+                  //         ),
+                  //       )).toList(),
+                  // );
+                  logger.d(tabController.length);
+                  logger.d(events.length);
+                  logger.d(events);
+                  //if(tabController.length == events.length){
+                  return new ImageSlider(
+
+                    /// Shows the tab indicating circles at the bottom
+                    showTabIndicator: false,
+
+                    /// Cutomize tab's colors
+                    tabIndicatorColor: Colors.lightBlue,
+
+                    /// Customize selected tab's colors
+                    tabIndicatorSelectedColor: Color.fromARGB(255, 0, 0, 255),
+
+                    /// Height of the indicators from the bottom
+                    tabIndicatorHeight: 16,
+
+                    /// Size of the tab indicator circles
+                    tabIndicatorSize: 16,
+
+                    /// tabController for walkthrough or other implementations
+                    tabController: tabController,
+
+                    /// Animation curves of sliding
+                    curve: Curves.fastOutSlowIn,
+
+                    /// Width of the slider
+                    width: MediaQuery
+                        .of(context)
+                        .size
+                        .width,
+
+                    /// Height of the slider
+                    height: 200,
+
+                    /// If automatic sliding is required
+                    autoSlide: true,
+
+                    /// Time for automatic sliding
+                    duration: new Duration(seconds: 3),
+
+                    /// If manual sliding is required
+                    allowManualSlide: true,
+
+                    /// Children in slideView to slide
+                    children: events.map((String link) {
+                      return new FlatButton(
+                          onPressed: () {
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //     builder: (context) => eventPage(),
+                            //   ), //MaterialPageRoute
+                            // );
+                            var idx = events.indexOf(link);
+                            launchWebView(
+                                'https://' + event_info['event_$idx']);
+                          },
+                          child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8.0),
+                              child: Image.network(
+                                link,
+                                width: MediaQuery
+                                    .of(context)
+                                    .size
+                                    .width,
+                                //height: 200,
+                                fit: BoxFit.fitWidth,
+                              )));
+                    }).toList(),
                   );
+                  // }
+                  // else{
+                  //   return Container(
+                  //     height: 200,
+                  //     child: widgetLoading(),
+                  //   );
+                  // }
                 } else {
                   return Container(
-                    height: grid_height * 3,
+                    height: 200,
                     child: widgetLoading(),
                   );
                 }
@@ -422,7 +520,8 @@ class SignedInPageState extends State<SignedInPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(5.0),
                 ),
-                onPressed: () => reservationBtn_deliver(),
+                //onPressed: () => reservationBtn_deliver(),
+                onPressed: () => reservationBtn_collect(),
                 child: Padding(
                     padding: const EdgeInsets.fromLTRB(0.0, 8.0, 8.0, 8.0),
                     child: Column(
@@ -666,16 +765,16 @@ class SignedInPageState extends State<SignedInPage> {
                               value: time_zone,
                               items: [
                                 DropdownMenuItem(
-                                  child: Text('아침'),
-                                  value: '아침',
+                                  child: Text('10:00'),
+                                  value: '10:00',
                                 ),
                                 DropdownMenuItem(
-                                  child: Text('점심'),
-                                  value: '점심',
+                                  child: Text('14:00'),
+                                  value: '14:00',
                                 ),
                                 DropdownMenuItem(
-                                  child: Text('저녁'),
-                                  value: '저녁',
+                                  child: Text('20:00'),
+                                  value: '20:00',
                                 ),
                               ],
                               onChanged: (value) async {
@@ -719,7 +818,7 @@ class SignedInPageState extends State<SignedInPage> {
                           ));
                     } else {
                       setState(() {
-                        if (time_zone == '아침') {
+                        if (time_zone == '10:00') {
                           reservationInfo.setReservationTime(
                               DateTime(_reservation_time.year,
                                   _reservation_time.month,
@@ -728,7 +827,7 @@ class SignedInPageState extends State<SignedInPage> {
                           _reservation_time =
                               reservationInfo.getReservationTime();
                         }
-                        else if (time_zone == '점심') {
+                        else if (time_zone == '14:00') {
                           reservationInfo.setReservationTime(
                               DateTime(_reservation_time.year,
                                   _reservation_time.month,
@@ -809,7 +908,30 @@ class SignedInPageState extends State<SignedInPage> {
     reservationInfo.setCustomerRequests(customerRequestCont.text.trim());
     setRememberRequests(reservationInfo.getCustomerRequests());
     reservationInfo.setApplicationTime(_now);
-    if (fp.getUserInfo()['tickets'] + fp.getUserInfo()['p_tickets'] +
+    if (fp.getUserInfo()['phone'] == '0') {
+      return await PopupBox.showPopupBox(
+          context: context,
+          button: MaterialButton(
+            minWidth: grid_width * 5,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            color: COLOR_SSDAM,
+            child: Text(
+              'Ok',
+              style: TextStyle(color: Colors.white, fontSize: 20),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+          willDisplayWidget: Center(
+              child: Text(
+                '마이페이지에서 휴대폰 인증을 해주시기 바랍니다.',
+                style: TextStyle(fontSize: 16, color: Colors.black),
+              )));
+    }
+    else if (fp.getUserInfo()['tickets'] + fp.getUserInfo()['p_tickets'] +
         fp.getUserInfo()['r_tickets'] > 0) {
       if (reservationInfo
           .getAddress()

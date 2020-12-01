@@ -401,6 +401,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.1.0"
+  image_slider:
+    dependency: "direct main"
+    description:
+      name: image_slider
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.2"
   infinite_listview:
     dependency: "direct main"
     description:

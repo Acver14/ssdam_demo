@@ -484,14 +484,15 @@ class MyPageState extends State<MyPage> {
                               splashColor: Colors.transparent,
                               highlightColor: Colors.transparent,
                               onPressed: () {
-                                final RenderBox box = context
-                                    .findRenderObject();
+                                final RenderBox box =
+                                    context.findRenderObject();
                                 Share.share(
-                                    '- 안드로이드 : https://bit.ly/2HD1n7P\n- ios : https://apple.co/3oPluAq',
-                                    subject: '친구와 함께 쓰담을 이용하세요! - 친구 추천 코드 입력 후, 쓰담 이용시 무료 이용권을 받게 됩니다.\n추천코드 :\n${fp
-                                        .getUserInfo()['promotionCode']}\n\n',
-                                    sharePositionOrigin: box.localToGlobal(
-                                        Offset.zero) & box.size);
+                                    '안드로이드 : https://bit.ly/2HD1n7P\n- ios : https://apple.co/3oPluAq',
+                                    subject:
+                                        '친구와 함께 쓰담을 이용하세요! - 친구 추천 코드 입력 후, 쓰담 이용시 무료 이용권을 받게 됩니다.\n추천코드 :\n${fp.getUserInfo()['promotionCode']}\n\n',
+                                    sharePositionOrigin:
+                                        box.localToGlobal(Offset.zero) &
+                                            box.size);
                               },
                             )
                         )
